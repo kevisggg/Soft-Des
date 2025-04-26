@@ -73,6 +73,7 @@ public class GamePanel extends JPanel implements Runnable{
 		    // Reset tile map to its original state
 		    tileMgr.loadMap("/maps/mapblank.txt"); // You'll need to implement this in TileManager
 
+		//TRY CALL SETUPGAME() INSTEAD OF MANUAL SET ENEMY
 		    // Re-initialize enemies and objects
 		    asset.setEnemy();
 

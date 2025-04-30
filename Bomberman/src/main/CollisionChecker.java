@@ -157,4 +157,60 @@ public class CollisionChecker {
 		gp.player.collisionBox.y = gp.player.collisionBoxDefaultY;
 		return hit;
 	}
+	
+	public int checkObject(Entity entity) {
+		int index=999;
+		
+		for(int i =0; i<gp.obj.size(); i++) {
+			if(gp.obj.get(i) != null) {
+				entity.collisionBox.x = entity.worldX + entity.collisionBox.x;
+				entity.collisionBox.y = entity.worldY + entity.collisionBox.y;
+				
+				gp.obj.get(i).collisionBox.x = gp.obj.get(i).collisionBox.x + gp.obj.get(i).getX();
+				gp.obj.get(i).collisionBox.y = gp.obj.get(i).collisionBox.y + gp.obj.get(i).getY();
+			
+				switch(entity.direction) {
+				case "up":
+					entity.collisionBox.y -= entity.speed;
+					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+						//entity.collisionOn = true;
+						//hit = true;
+						index = i;
+					}
+					break;
+				case "down":
+					entity.collisionBox.y += entity.speed;
+					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+						//entity.collisionOn = true;
+						//hit = true;
+						index = i;
+					}
+					break;
+				case "left":
+					entity.collisionBox.x -= entity.speed;
+					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+						//entity.collisionOn = true;
+						//hit = true;
+						index = i;
+					}
+					break;
+				case "right":
+					entity.collisionBox.x += entity.speed;
+					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+						//entity.collisionOn = true;
+						//hit = true;
+						index = i;
+					}
+					break;
+				}
+				entity.collisionBox.x = entity.collisionBoxDefaultX;
+				entity.collisionBox.y = entity.collisionBoxDefaultX;
+				gp.obj.get(i).collisionBox.x = gp.obj.get(i).collisionBoxDefaultX;
+				gp.obj.get(i).collisionBox.y = gp.obj.get(i).collisionBoxDefaultY;
+			}
+			
+		}
+		
+		return index;
+	}
 }

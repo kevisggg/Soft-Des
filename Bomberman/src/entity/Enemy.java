@@ -48,7 +48,7 @@ public class Enemy extends Entity{
 		//WITH MOVEMENT LIMIT OR JUST COLLISION
 		if(movementCnt==movementLimit || collisionOn == true) {
 			Random random = new Random();
-			int i = random.nextInt(4)+1;
+			int i = random.nextInt(4)+1;//from 1-4
 			switch(i) {
 			case 1: direction = "up"; break;
 			case 2: direction = "down"; break;

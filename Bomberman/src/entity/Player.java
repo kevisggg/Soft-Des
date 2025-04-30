@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import main.GamePanel;
 import main.KeyHandler;
 import object.Bomb;
+import object.SuperObject;
 
 public class Player extends Entity{
 	KeyHandler keyH;
@@ -72,6 +73,10 @@ public class Player extends Entity{
 	
 	public int getBombRadius() {
 		return bombRadius;
+	}
+	
+	public int getLives() {
+		return lives;
 	}
 	
 	public void setInvincible(boolean set) {
@@ -151,6 +156,22 @@ public class Player extends Entity{
 			collisionOn = false;
 			gp.colCheck.checkTile(this);
 			
+			//CHECK POWERUP PICKUP
+			int objIndex = gp.colCheck.checkObject(this);
+			if(objIndex!=999) {
+				//System.out.println("PICKUP: " + gp.obj.get(objIndex).name);
+				SuperObject obj = gp.getObj(objIndex);
+				switch(obj.getName()) {
+				case "PUcapacity":
+					increaseCapacity();
+					break;
+				case "PUrange":
+					increaseRange();
+					break;
+				}
+				gp.removeObj(objIndex);
+			}
+			
 			//CHECK ENEMY COLLISION
 			if(!getInvincible()) {
 				if(gp.colCheck.checkEnemy(this, gp.enemies)) {
@@ -202,6 +223,16 @@ public class Player extends Entity{
 	}
 	
 	
+	private void increaseRange() {
+		bombRadius++;
+		System.out.println("BOMBS RADIUS: "+bombRadius);
+	}
+
+	private void increaseCapacity() {
+		bombCnt++;
+		System.out.println("BOMBS AVAIL: "+bombCnt);
+	}
+
 	public void collideEnemy() {
 		System.out.println("COLLISION");
 		setHit(true);

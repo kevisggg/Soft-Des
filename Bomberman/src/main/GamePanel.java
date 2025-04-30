@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.swing.JPanel;
 
@@ -36,7 +37,8 @@ public class GamePanel extends JPanel implements Runnable{
 	public Player player = new Player(this, keyH);
 	//public Enemy enemy[] = new Enemy[5];
 	public ArrayList<Enemy> enemies = new ArrayList<>();
-	public SuperObject obj[] = new SuperObject[10];
+	//public SuperObject obj[] = new SuperObject[5];
+	public ArrayList<SuperObject> obj = new ArrayList<>();
 	public ArrayList<Bomb> bombs = new ArrayList<>();
 	public ArrayList<Explosion> explosions = new ArrayList<>();
 	public UI ui = new UI(this);
@@ -72,13 +74,14 @@ public class GamePanel extends JPanel implements Runnable{
 
 		    // Reset tile map to its original state
 		    tileMgr.loadMap("/maps/mapblank.txt"); // You'll need to implement this in TileManager
-
-		//TRY CALL SETUPGAME() INSTEAD OF MANUAL SET ENEMY
+		    
+		    setupGame();
+		   
 		    // Re-initialize enemies and objects
-		    asset.setEnemy();
+		    //asset.setEnemy();
 
 		    // Reset game state
-		    gameState = playState;
+		    //gameState = playState;
 	}
 	
 	public void startGameThread() {
@@ -133,7 +136,7 @@ public class GamePanel extends JPanel implements Runnable{
 				}
 			}
 			
-			System.out.println(bombs.size());/////////////////////
+			//System.out.println(bombs.size());/////////////////////
 			for(int i = bombs.size() - 1; i >= 0; i--){
 				Bomb b = bombs.get(i);
 				if(b!=null) {
@@ -202,7 +205,7 @@ public class GamePanel extends JPanel implements Runnable{
 		
 		int eX = b.getX()/tileSize;
 		int eY = b.getY()/tileSize;
-		
+		System.out.println("x: " + eX + " y: " + eY);
 		boolean upEmpty = checkTileExp(eX, eY-1, true);
 		boolean downEmpty = checkTileExp(eX, eY+1, true);
 		boolean leftEmpty = checkTileExp(eX-1, eY, true);
@@ -210,25 +213,36 @@ public class GamePanel extends JPanel implements Runnable{
 		addExplosions(eX*tileSize, eY*tileSize);
 		for(int i = 0; i <= player.getBombRadius(); i++) {
 			System.out.println("ADDING EXPLOSIONS");
-			if(upEmpty) {
+			if(eY-i>0 && upEmpty) {
 				System.out.println("UP EMPTY");
-				addExplosions(eX*tileSize, (eY-i)*tileSize);
+				
 				upEmpty = checkTileExp(eX, eY-i, upEmpty);
+				if(upEmpty) {
+					addExplosions(eX*tileSize, (eY-i)*tileSize);
+				}
 			}
-			if(downEmpty) {
+			if(eY+i>0 && downEmpty) {
 				System.out.println("DOWN EMPTY");
-				addExplosions(eX*tileSize, (eY+i)*tileSize);
 				downEmpty = checkTileExp(eX, eY+i, downEmpty);
+				if(downEmpty) {
+					addExplosions(eX*tileSize, (eY+i)*tileSize);
+				}
 			}
-			if(leftEmpty) {
+			if(eX-i>0 && leftEmpty) {
 				System.out.println("LEFT EMPTY");
-				addExplosions((eX-i)*tileSize, eY*tileSize);
+				//addExplosions((eX-i)*tileSize, eY*tileSize);
 				leftEmpty = checkTileExp(eX-i, eY, leftEmpty);
+				if(leftEmpty) {
+					addExplosions((eX-i)*tileSize, eY*tileSize);
+				}
 			}
-			if(rightEmpty) {
+			if(eX+i>0 && rightEmpty) {
 				System.out.println("RIGHT EMPTY");
-				addExplosions((eX+i)*tileSize, eY*tileSize);
+				//addExplosions((eX+i)*tileSize, eY*tileSize);
 				rightEmpty = checkTileExp(eX+i, eY, rightEmpty);
+				if(rightEmpty) {
+					addExplosions((eX+i)*tileSize, eY*tileSize);
+				}
 			}
 		}
 		System.out.println("EXPLOSIONS: " + explosions.size());
@@ -244,12 +258,64 @@ public class GamePanel extends JPanel implements Runnable{
 			//entity.collisionOn = true;
 			if(tile == 2) {
 				tileMgr.setTile(0, x, y);
+				int drop=randomDrop();
+				if(drop!=0) {
+					asset.setObject(drop, x*tileSize, y*tileSize);
+				}
+				
 			}
 			else {
 				empty = false;
 			}
 		}
+		else {
+			System.out.println(obj.size());
+			for(int i=0;i<obj.size();i++) {
+				System.out.println("X: " + x + " Y: " + y);
+				System.out.println("OBJ X: " + obj.get(i).getX()/tileSize + "OBJ Y: " + obj.get(i).getY()/tileSize);
+				if(x==(obj.get(i).getX())/tileSize && y==(obj.get(i).getY())/tileSize) {
+					obj.get(i).addHits();
+					boolean remove = obj.get(i).checkHits();
+					if(remove) {
+						obj.remove(i);
+					}
+				}
+			}
+			/* 
+			 *boolean = assetPresent[x][y]; --> in AssetSetter
+			 *OR
+			 *for(inti = 0; i<obj,size; obj++SuperObject obj: obj){
+			 * if get(x),get(y) = x,y
+			 *obj.remove
+			 *
+			 *
+			 *}
+			 **/
+		}
 		return empty;
+	}
+	
+	public int randomDrop() {
+		int drop=0;
+		Random random = new Random();
+		int i = random.nextInt(100)+1;//from 1-4
+		if(i>=1 && i<=15) {
+			drop = 1;
+			System.out.println(drop+": CAPACITY PU");
+		}
+		else if(i>=16 && i<=30) {
+			drop = 2;
+			System.out.println(drop+": RANGE PU");
+		}
+		return drop;
+	}
+	
+	public SuperObject getObj(int i) {
+		return obj.get(i);
+	}
+	
+	public void removeObj(int i) {
+		obj.remove(i);
 	}
 
 	public void paintComponent(Graphics g) {
@@ -261,11 +327,12 @@ public class GamePanel extends JPanel implements Runnable{
 		tileMgr.draw(g2);
 		
 		//OBJECT
-		/*for(int i=0; i<obj.length; i++) {
-			if(obj[i]!= null) {
-				obj[i].draw(g2, this);
+		for(SuperObject pu: obj) {
+			if(pu!= null) {
+				pu.draw(g2, this);
 			}
-		}*/
+		}
+		
 		for(Bomb b: bombs) {
 			if(b!=null) {
 				b.draw(g2);

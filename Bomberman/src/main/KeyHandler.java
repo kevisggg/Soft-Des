@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 public class KeyHandler implements KeyListener{
 	
 	public boolean upPressed, downPressed, leftPressed, rightPressed, spacePressed;
+	int up, down, left, right, space;
 	GamePanel gp;
 	
 	public KeyHandler(GamePanel gp) {
@@ -18,7 +19,7 @@ public class KeyHandler implements KeyListener{
 	public void keyPressed(KeyEvent e) {
 		int code = e.getKeyCode();
 		
-		if(code == KeyEvent.VK_W) {
+		if(code == KeyEvent.VK_W) {//change to up key,
 			upPressed = true;
 		}
 		if(code == KeyEvent.VK_S) {

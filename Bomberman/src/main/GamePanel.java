@@ -31,6 +31,7 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	public TileManager tileMgr = new TileManager(this);
 	KeyHandler keyH = new KeyHandler(this);
+	MouseHandler mouseH = new MouseHandler(this);
 	Thread gameThread;
 	public CollisionChecker colCheck = new CollisionChecker(this);
 	public AssetSetter asset = new AssetSetter(this);
@@ -57,6 +58,7 @@ public class GamePanel extends JPanel implements Runnable{
 		this.setBackground(Color.blue);
 		this.setDoubleBuffered(true);
 		this.addKeyListener(keyH);
+		this.addMouseListener(mouseH);
 		this.setFocusable(true);
 	}
 	

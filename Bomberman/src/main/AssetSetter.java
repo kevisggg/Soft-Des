@@ -38,10 +38,10 @@ public class AssetSetter {
 	}
 	
 	public void setEnemy() {
-		gp.enemies.add(new Enemy(gp, gp.tileSize, gp.tileSize*6));
-		gp.enemies.add(new Enemy(gp, gp.tileSize*8, gp.tileSize));
-		gp.enemies.add(new Enemy(gp, gp.tileSize*5, gp.tileSize*10));
-		gp.enemies.add(new Enemy(gp, gp.tileSize*14, gp.tileSize*8));
-		gp.enemies.add(new Enemy(gp, gp.tileSize*9, gp.tileSize*6));
+		gp.enemies.add(new Enemy(gp, gp.tileSize, gp.tileSize*6, gp.getCollisionChecker()));
+		//gp.enemies.add(new Enemy(gp, gp.tileSize*8, gp.tileSize, gp.getCollisionChecker());
+		//gp.enemies.add(new Enemy(gp, gp.tileSize*5, gp.tileSize*10, gp.getCollisionChecker());
+		//gp.enemies.add(new Enemy(gp, gp.tileSize*14, gp.tileSize*8, gp.getCollisionChecker());
+		//gp.enemies.add(new Enemy(gp, gp.tileSize*9, gp.tileSize*6, gp.getCollisionChecker());
 	}
 }

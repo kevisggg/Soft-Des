@@ -1,16 +1,25 @@
 package main;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import entity.Enemy;
 import entity.Entity;
+import entity.Explosion;
+import tile.TileManager;
 
 public class CollisionChecker {
 	
-	GamePanel gp;
+	private GamePanel gp;
+	private TileManager tileMgr;
+	private AssetSetter asset;
+	private Rectangle playerBox;
+	private boolean hit;
 	
 	public CollisionChecker(GamePanel gp) {
 		this.gp = gp;
+		this.asset = gp.asset;
+		tileMgr = gp.getTileManager();
 	}
 	
 	public void checkTile(Entity entity) {
@@ -29,33 +38,33 @@ public class CollisionChecker {
 		switch(entity.direction) {
 		case "up":
 			entityTopRow = (entityTop - entity.speed)/gp.tileSize;
-			tile1 = gp.tileMgr.mapTileNum[entityLeftCol][entityTopRow];//TOP LEFT
-			tile2 = gp.tileMgr.mapTileNum[entityRightCol][entityTopRow];//TOP RIGHT
-			if(gp.tileMgr.tile[tile1].collision == true || gp.tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.mapTileNum[entityLeftCol][entityTopRow];//TOP LEFT
+			tile2 = tileMgr.mapTileNum[entityRightCol][entityTopRow];//TOP RIGHT
+			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
 				entity.collisionOn = true;
 			}
 			break;
 		case "down":
 			entityBottomRow = (entityBottom + entity.speed)/gp.tileSize;
-			tile1 = gp.tileMgr.mapTileNum[entityLeftCol][entityBottomRow];//BOT LEFT
-			tile2 = gp.tileMgr.mapTileNum[entityRightCol][entityBottomRow];//BOT RIGHT
-			if(gp.tileMgr.tile[tile1].collision == true || gp.tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.mapTileNum[entityLeftCol][entityBottomRow];//BOT LEFT
+			tile2 = tileMgr.mapTileNum[entityRightCol][entityBottomRow];//BOT RIGHT
+			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
 				entity.collisionOn = true;
 			}
 			break;
 		case "left":
 			entityLeftCol = (entityLeft - entity.speed)/gp.tileSize;
-			tile1 = gp.tileMgr.mapTileNum[entityLeftCol][entityTopRow];//TOP LEFT
-			tile2 = gp.tileMgr.mapTileNum[entityLeftCol][entityBottomRow];//BOT LEFT
-			if(gp.tileMgr.tile[tile1].collision == true || gp.tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.mapTileNum[entityLeftCol][entityTopRow];//TOP LEFT
+			tile2 = tileMgr.mapTileNum[entityLeftCol][entityBottomRow];//BOT LEFT
+			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
 				entity.collisionOn = true;
 			}
 			break;
 		case "right":
 			entityRightCol = (entityRight + entity.speed)/gp.tileSize;
-			tile1 = gp.tileMgr.mapTileNum[entityRightCol][entityTopRow];//TOP RIGHT
-			tile2 = gp.tileMgr.mapTileNum[entityRightCol][entityBottomRow];//BOT RIGHT
-			if(gp.tileMgr.tile[tile1].collision == true || gp.tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.mapTileNum[entityRightCol][entityTopRow];//TOP RIGHT
+			tile2 = tileMgr.mapTileNum[entityRightCol][entityBottomRow];//BOT RIGHT
+			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
 				entity.collisionOn = true;
 			}
 			break;
@@ -212,5 +221,62 @@ public class CollisionChecker {
 		}
 		
 		return index;
+	}
+	
+	public boolean checkTileExp(int x, int y, boolean empty) {
+		int tile = tileMgr.mapTileNum[x][y];
+		if(tileMgr.tile[tile].collision == true) {
+			//entity.collisionOn = true;
+			if(tile == 2) {//DESTROY TILE AND RANDOMIZE PU DROP
+				tileMgr.setTile(0, x, y);
+				int drop=gp.randomDrop();
+				if(drop!=0) {
+					asset.setObject(drop, x*gp.tileSize, y*gp.tileSize);
+				}
+				
+			}
+			else {
+				empty = false;
+			}
+		}
+		else {//REMOVE HIT POWER UPS
+			System.out.println(gp.obj.size());
+			for(int i=0;i<gp.obj.size();i++) {
+				System.out.println("X: " + x + " Y: " + y);
+				//System.out.println("OBJ X: " + obj.get(i).getX()/tileSize + "OBJ Y: " + obj.get(i).getY()/tileSize);
+				if(x==(gp.obj.get(i).getX())/gp.tileSize && y==(gp.obj.get(i).getY())/gp.tileSize) {
+					gp.obj.get(i).addHits();
+					boolean remove = gp.obj.get(i).checkHits();
+					if(remove) {
+						gp.obj.remove(i);
+					}
+				}
+			}
+			/* 
+			 *boolean = assetPresent[x][y]; --> in AssetSetter
+			 *OR
+			 *for(inti = 0; i<obj,size; obj++SuperObject obj: obj){
+			 * if get(x),get(y) = x,y
+			 *obj.remove
+			 *
+			 *
+			 *}
+			 **/
+		}
+		return empty;
+	}
+	
+	public boolean checkEntityExp(int x, int y, int width, int height) {
+		playerBox = new Rectangle(x,y,width,height);
+		hit=false;
+		for (Explosion e : gp.explosions) {
+	        if (e.collisionBox.intersects(playerBox)) {
+	        	//gp.player.setHit(true);
+		       	//gp.player.setInvincible(true);
+		       	hit = true;
+	            break;
+	        }
+	    }
+		return hit;    
 	}
 }

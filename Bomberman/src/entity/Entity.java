@@ -7,12 +7,14 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import main.CollisionChecker;
 import main.GamePanel;
 import main.ImageScaler;
 
 //ABSTRACT store variables used in player npc classes
 public class Entity {
 	GamePanel gp;
+	CollisionChecker colCheck;
 	public int worldX, worldY;
 	public int speed;
 	public String name;
@@ -25,8 +27,9 @@ public class Entity {
 	public boolean collisionOn = false, entityHit = false;
 	public int collisionBoxDefaultX, collisionBoxDefaultY;
 	
-	public Entity(GamePanel gp) {
-		this.gp = gp;	
+	public Entity(GamePanel gp, CollisionChecker colCheck) {
+		this.gp = gp;
+		this.colCheck = colCheck;
 	}
 	
 	public int getX() {
@@ -35,6 +38,14 @@ public class Entity {
 	
 	public int getY() {
 		return worldY + collisionBox.y;
+	}
+	
+	public int getWidth() {
+		return collisionBox.width;
+	}
+	
+	public int getHeight() {
+		return collisionBox.height;
 	}
 	
 	public void setHit(boolean hit) {
@@ -51,10 +62,10 @@ public class Entity {
 		setMovement();
 		
 		collisionOn = false;
-		gp.colCheck.checkTile(this);
+		colCheck.checkTile(this);
 		
 		if(!gp.player.getInvincible()) {
-			if(gp.colCheck.checkPlayer(this)) {
+			if(colCheck.checkPlayer(this)) {
 				gp.player.collideEnemy();
 			}
 		}

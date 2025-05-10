@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-public class PU_Capacity extends SuperObject{
+public class PU_Capacity extends PowerUp{
 	
 	public PU_Capacity() {
 		

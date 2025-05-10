@@ -9,14 +9,15 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
+import main.CollisionChecker;
 import main.GamePanel;
 import main.ImageScaler;
 import object.Bomb;
 
 public class Enemy extends Entity{
 	private int movementLimit, movementCnt;
-	public Enemy(GamePanel gp, int x, int y) {
-		super(gp);
+	public Enemy(GamePanel gp, int x, int y, CollisionChecker colCheck) {
+		super(gp, colCheck);
 		
 		name = "Bot";
 		speed = 1;

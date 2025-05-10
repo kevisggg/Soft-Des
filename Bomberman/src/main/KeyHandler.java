@@ -19,7 +19,7 @@ public class KeyHandler implements KeyListener{
 	public void keyPressed(KeyEvent e) {
 		int code = e.getKeyCode();
 		
-		if(code == KeyEvent.VK_W) {//change to up key,
+		if(code == 'W') {//change to up key,
 			upPressed = true;
 		}
 		if(code == KeyEvent.VK_S) {
@@ -35,11 +35,11 @@ public class KeyHandler implements KeyListener{
 			spacePressed = true;
 		}
 		if(code == KeyEvent.VK_ESCAPE) {
-			if(gp.gameState == gp.playState) {
-				gp.gameState = gp.pauseState;
+			if(gp.getGameState() == gp.playState) {
+				gp.setPauseState();
 			}
-			else if(gp.gameState == gp.pauseState) {
-				gp.gameState = gp.playState;
+			else if(gp.getGameState() == gp.pauseState) {
+				gp.setPlayState();
 			}
 		}
 		

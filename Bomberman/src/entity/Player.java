@@ -1,26 +1,31 @@
 package entity;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
+import main.CollisionChecker;
 import main.GamePanel;
 import main.KeyHandler;
+import main.ScoreHandler;
 import object.Bomb;
-import object.SuperObject;
+import object.PowerUp;
 
 public class Player extends Entity{
-	KeyHandler keyH;
+	private KeyHandler keyH;
+	private PowerUp obj;
+	//private ScoreHandler scoreH;
 	private int bombCnt, bombRadius, bombsPlaced, bombCooldown, lives, invincibleCnt, invincibleDuration, blinkInterval, collisionTile;
 	boolean  isInvincible, isVisible, bombAlreadyPlaced;
 	
 	
-	public Player(GamePanel gp, KeyHandler keyH) {
-		super(gp);
+	public Player(GamePanel gp, KeyHandler keyH, CollisionChecker colCheck) {
+		super(gp, colCheck);
 		this.keyH = keyH;
 		name = "Player";
 		collisionBox = new Rectangle(10, 16, 28, 32);
-		
+		lives = 3;
 		
 		setDefaultVal();
 		getPlayerImage();
@@ -33,11 +38,11 @@ public class Player extends Entity{
 		collisionBoxDefaultY = collisionBox.y;
 		speed = 3;
 		direction = "down";
-		bombCnt = 3;
+		bombCnt = 1;///////
 		bombsPlaced = 0;
-		bombRadius = 1;
+		bombRadius = 1;//////////
 		bombCooldown = 0;
-		lives = 3;
+		//lives = 3;
 		invincibleCnt = 0;
 		invincibleDuration = 180;//3.5 SECONDS
 		blinkInterval = 5;
@@ -59,13 +64,25 @@ public class Player extends Entity{
 		up2 = setupImage("/player/up2.png");
 	}
 	
-	public void setBombCount(int bombCnt) {
+	public int getPURadius() {
+		return bombRadius-1;
+	}
+	
+	public int getPUcap() {
+		return bombCnt-1;
+	}
+	
+	public int getBombsAvail() {
+		return bombCnt-bombsPlaced;
+	}
+	
+	/*public void setBombCount(int bombCnt) {
 		this.bombCnt = bombCnt;
 	}
 	
 	public void setBombRadius(int bombRadius) {
 		this.bombRadius = bombRadius;
-	}
+	}*/
 	
 	public int getBombCount() {
 		return bombCnt;
@@ -114,15 +131,15 @@ public class Player extends Entity{
 	public void update() {
 		bombCooldown++;
 		if(lives == 0) {
-			gp.gameState = gp.gameoverState;
+			gp.setOverState();
 		}
 		
 		if(bombCooldown > 12) {
 			if(keyH.spacePressed==true) {
 				//check if bombs available, MAKE METHOD
-				collisionTile = gp.tileMgr.mapTileNum[(worldX + collisionBox.x+5)/gp.tileSize][(worldY+collisionBox.y+10)/gp.tileSize];
+				collisionTile = gp.getTileManager().mapTileNum[(worldX + collisionBox.x+5)/gp.tileSize][(worldY+collisionBox.y+10)/gp.tileSize];
 				System.out.println("=====" + worldX/gp.tileSize + "   " + worldY/gp.tileSize);
-				if(bombsPlaced < bombCnt && !gp.tileMgr.getTileCollision(collisionTile)) {
+				if(bombsPlaced < bombCnt && !gp.getTileManager().getTileCollision(collisionTile)) {
 					for(Bomb b: gp.bombs) {
 						if((b.getX()+ collisionBox.x+5)/gp.tileSize == (worldX + collisionBox.x+5)/gp.tileSize && (b.getY()+ collisionBox.x+10)/gp.tileSize == (worldY+collisionBox.y+10)/gp.tileSize) {
 							bombAlreadyPlaced = true;
@@ -154,13 +171,15 @@ public class Player extends Entity{
 			
 			//CHECK COLLISION
 			collisionOn = false;
-			gp.colCheck.checkTile(this);
+			colCheck.checkTile(this);
 			
 			//CHECK POWERUP PICKUP
-			int objIndex = gp.colCheck.checkObject(this);
+			int objIndex = colCheck.checkObject(this);
 			if(objIndex!=999) {
+				//addScore(SCORE_PU);
 				//System.out.println("PICKUP: " + gp.obj.get(objIndex).name);
-				SuperObject obj = gp.getObj(objIndex);
+				
+				obj = gp.getObj(objIndex);
 				switch(obj.getName()) {
 				case "PUcapacity":
 					increaseCapacity();
@@ -170,11 +189,12 @@ public class Player extends Entity{
 					break;
 				}
 				gp.removeObj(objIndex);
+				gp.getScoreHandler().addScorePowerUp();
 			}
 			
 			//CHECK ENEMY COLLISION
 			if(!getInvincible()) {
-				if(gp.colCheck.checkEnemy(this, gp.enemies)) {
+				if(colCheck.checkEnemy(this, gp.enemies)) {
 					collideEnemy();
 				}
 			}
@@ -279,5 +299,15 @@ public class Player extends Entity{
 		if(isVisible) {
 			g2.drawImage(image, worldX, worldY, null);
 		}
+		//g2.setColor(Color.WHITE);
+		//g2.draw(this.collisionBox);
+		g2.setColor(Color.RED); // Set color for visibility
+	    Rectangle actualCollisionBox = new Rectangle(
+	        worldX + collisionBox.x,  // Absolute X position on screen
+	        worldY + collisionBox.y,  // Absolute Y position on screen
+	        collisionBox.width,
+	        collisionBox.height
+	    );
+	    g2.draw(actualCollisionBox);
 	}
 }

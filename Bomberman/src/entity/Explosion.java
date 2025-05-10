@@ -1,6 +1,7 @@
 package entity;
 
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -15,6 +16,7 @@ public class Explosion{
 	GamePanel gp;
 	BufferedImage exp;
 	private boolean expActive, expStart, hasHitPlayer;
+	public Rectangle collisionBox;
 	public Explosion(int x, int y, GamePanel gp) {
 		worldX = x;
 		worldY = y;
@@ -22,6 +24,7 @@ public class Explosion{
 		timer = 60;
 		expActive = true;
 		expStart = false;
+		collisionBox = new Rectangle(x+5,y+6,gp.tileSize-10,gp.tileSize-13);
 		//hasHitPlayer = false;
 		exp = setupImage("/objects/explosion.png");
 	}
@@ -85,6 +88,7 @@ public class Explosion{
 	public void draw(Graphics2D g2, GamePanel gp){
 		if(expActive) {
 			g2.drawImage(exp, worldX, worldY, null);
+			g2.draw(collisionBox);
 		}
 	}
 }

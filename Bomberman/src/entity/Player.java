@@ -109,6 +109,7 @@ public class Player extends Entity{
 		gp.bombs.add(b);
 		bombsPlaced++;
 		gp.playSFX(1);
+		gp.playSFX(7);
 		}
 	
 	public void removeBombsPlaced() {
@@ -134,6 +135,7 @@ public class Player extends Entity{
 		if(lives == 0) {
 			gp.updateLeaderboard();
 			gp.setOverState();
+			gp.playSFX(8);
 		}
 		
 		if(bombCooldown > 12) {

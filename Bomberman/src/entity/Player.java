@@ -303,12 +303,14 @@ public class Player extends Entity{
 		//g2.setColor(Color.WHITE);
 		//g2.draw(this.collisionBox);
 		g2.setColor(Color.RED); // Set color for visibility
-	    Rectangle actualCollisionBox = new Rectangle(
+	    
+		//COLLISION BOX TESTER
+		/*Rectangle actualCollisionBox = new Rectangle(
 	        worldX + collisionBox.x,  // Absolute X position on screen
 	        worldY + collisionBox.y,  // Absolute Y position on screen
 	        collisionBox.width,
 	        collisionBox.height
 	    );
-	    g2.draw(actualCollisionBox);
+	    g2.draw(actualCollisionBox);*/
 	}
 }

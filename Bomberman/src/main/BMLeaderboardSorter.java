@@ -16,6 +16,11 @@ public class BMLeaderboardSorter implements Serializable{
 	public void sort() {
 		Collections.sort(players, Comparator.comparingInt(BMPlayerLeaderboard::getScore).reversed());
 		setRank();
+		
+		//delete scores beyond top 20
+		if(players.size()>20) {
+			players.remove(20);
+		}
 	}
 	
 	public void setRank() {

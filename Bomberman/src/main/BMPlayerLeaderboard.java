@@ -13,7 +13,9 @@ public class BMPlayerLeaderboard implements Serializable{
 	}
 	
 	public void setRank(int rank) {
-		this.rank = rank;
+		if(rank<=20) {
+			this.rank = rank;
+		}
 	}
 	
 	public void setName(String name) {

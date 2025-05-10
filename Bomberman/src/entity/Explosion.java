@@ -88,7 +88,7 @@ public class Explosion{
 	public void draw(Graphics2D g2, GamePanel gp){
 		if(expActive) {
 			g2.drawImage(exp, worldX, worldY, null);
-			g2.draw(collisionBox);
+			//g2.draw(collisionBox);
 		}
 	}
 }

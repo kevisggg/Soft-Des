@@ -346,6 +346,7 @@ public class GamePanel extends JPanel implements Runnable{
 			System.out.println("TRUE SET");
 			e.setExpStatus(true);
 		}
+		playSFX(2);
 	}
 	
 	/*public boolean checkTileExp(int x, int y, boolean empty) {
@@ -492,8 +493,12 @@ public class GamePanel extends JPanel implements Runnable{
 		bml.sort();
 	}
 	
-	public int getCurPlayerRank() {
-		return currentPlayer.getRank();
+	public String getCurPlayerRank() {
+		String rank = String.valueOf(currentPlayer.getRank());
+		if(rank=="0") {
+			rank = "-";
+		}
+		return rank;
 	}
 	
 	public void setCurPlayerName(String name) {

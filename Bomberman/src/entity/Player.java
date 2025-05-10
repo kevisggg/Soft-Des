@@ -108,7 +108,8 @@ public class Player extends Entity{
 		Bomb b = new Bomb((worldX + gp.player.collisionBox.x + 5)/gp.tileSize*gp.tileSize, (worldY+gp.player.collisionBox.y+10)/gp.tileSize*gp.tileSize, gp);
 		gp.bombs.add(b);
 		bombsPlaced++;
-	}
+		gp.playSFX(1);
+		}
 	
 	public void removeBombsPlaced() {
 		bombsPlaced--;
@@ -176,7 +177,7 @@ public class Player extends Entity{
 			
 			//CHECK POWERUP PICKUP
 			int objIndex = colCheck.checkObject(this);
-			if(objIndex!=999) {
+			if(objIndex!=999) {//if powerup picked up
 				//addScore(SCORE_PU);
 				//System.out.println("PICKUP: " + gp.obj.get(objIndex).name);
 				
@@ -190,6 +191,7 @@ public class Player extends Entity{
 					break;
 				}
 				gp.removeObj(objIndex);
+				gp.playSFX(4);
 				gp.getScoreHandler().addScorePowerUp();
 			}
 			
@@ -230,6 +232,7 @@ public class Player extends Entity{
 			System.out.println("Lives: " + lives);
 			
 			entityHit = false;
+			gp.playSFX(3);
 		}
 		if(isInvincible) {
 			invincibleCnt++;
@@ -258,6 +261,7 @@ public class Player extends Entity{
 		System.out.println("COLLISION");
 		setHit(true);
 		setInvincible(true);
+		gp.playSFX(3);
 	}
 
 	public void draw(Graphics2D g2) {

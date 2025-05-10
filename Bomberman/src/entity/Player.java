@@ -131,6 +131,7 @@ public class Player extends Entity{
 	public void update() {
 		bombCooldown++;
 		if(lives == 0) {
+			gp.updateLeaderboard();
 			gp.setOverState();
 		}
 		

@@ -4,8 +4,14 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -35,6 +41,7 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	int FPS = 60;
 	
+	static final String DATA_FILE = "BM_Leaderboard.dat";
 	private TileManager tileMgr = new TileManager(this);
 	private KeyHandler keyH = new KeyHandler(this);
 	private Sound sound = new Sound();
@@ -50,9 +57,11 @@ public class GamePanel extends JPanel implements Runnable{
 	public ArrayList<PowerUp> obj = new ArrayList<>();
 	public ArrayList<Bomb> bombs = new ArrayList<>();
 	public ArrayList<Explosion> explosions = new ArrayList<>();
+	BMPlayerLeaderboard currentPlayer;
+	public static BMLeaderboardSorter bml = new BMLeaderboardSorter();
 	
-	public final int usernameState = 5; // New game state
-    private JTextField usernameField; // Text field for input
+	//public final int usernameState = 5; // New game state
+    //private JTextField usernameField; // Text field for input
     public boolean usernameRequested = false;
 	
 	public UI ui = new UI(this, mouseH, scoreH);
@@ -75,6 +84,7 @@ public class GamePanel extends JPanel implements Runnable{
 		this.addMouseListener(mouseH);
 		this.setFocusable(true);
 		usernameRequested = false;
+		loadData();
 	}
 	
 	public void saveUsername(String username) {
@@ -476,5 +486,53 @@ public class GamePanel extends JPanel implements Runnable{
 		sound.play();
 	}
 	
+	public void updateLeaderboard() {
+		currentPlayer = new BMPlayerLeaderboard(scoreH.getScoreVal());
+		bml.addPlayer(currentPlayer);
+		bml.sort();
+	}
 	
+	public int getCurPlayerRank() {
+		return currentPlayer.getRank();
+	}
+	
+	public void setCurPlayerName(String name) {
+		currentPlayer.setName(name);
+	}
+	
+	public static void loadData() {
+		File file = new File(DATA_FILE);
+		if(file.exists()) {
+			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
+				bml = (BMLeaderboardSorter) ois.readObject();
+	            ois.close();
+	        } catch (IOException | ClassNotFoundException e) {
+	            System.out.println("No previous data found. Starting fresh.");
+	            e.printStackTrace();
+	        }
+		}
+    }
+	
+	public void saveData() {
+		bml.out();
+		 try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+	            oos.writeObject(bml);
+	            oos.flush();
+				oos.close();
+	        } catch (IOException e) {
+	            System.out.println("Error saving data.");
+	            e.printStackTrace();
+	        }
+	}
 }
+
+/*class AppendableObjectOutputStream extends ObjectOutputStream {
+    public AppendableObjectOutputStream(OutputStream out) throws IOException {
+        super(out);
+    }
+    @Override
+    protected void writeStreamHeader() throws IOException {
+        // do not write a header when appending
+        reset();
+    }
+}*/

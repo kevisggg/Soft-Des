@@ -113,7 +113,7 @@ public class CollisionChecker {
 				}
 				//RESET BOX VALUES
 				entity.collisionBox.x = entity.collisionBoxDefaultX;
-				entity.collisionBox.y = entity.collisionBoxDefaultX;
+				entity.collisionBox.y = entity.collisionBoxDefaultY;
 				targets.get(i).collisionBox.x = targets.get(i).collisionBoxDefaultX;
 				targets.get(i).collisionBox.y = targets.get(i).collisionBoxDefaultY;
 			}
@@ -161,7 +161,7 @@ public class CollisionChecker {
 		}
 		//RESET BOX VALUES
 		entity.collisionBox.x = entity.collisionBoxDefaultX;
-		entity.collisionBox.y = entity.collisionBoxDefaultX;
+		entity.collisionBox.y = entity.collisionBoxDefaultY;
 		gp.player.collisionBox.x = gp.player.collisionBoxDefaultX;
 		gp.player.collisionBox.y = gp.player.collisionBoxDefaultY;
 		return hit;
@@ -213,7 +213,7 @@ public class CollisionChecker {
 					break;
 				}
 				entity.collisionBox.x = entity.collisionBoxDefaultX;
-				entity.collisionBox.y = entity.collisionBoxDefaultX;
+				entity.collisionBox.y = entity.collisionBoxDefaultY;
 				gp.obj.get(i).collisionBox.x = gp.obj.get(i).collisionBoxDefaultX;
 				gp.obj.get(i).collisionBox.y = gp.obj.get(i).collisionBoxDefaultY;
 			}

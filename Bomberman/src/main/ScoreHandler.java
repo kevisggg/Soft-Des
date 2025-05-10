@@ -37,6 +37,10 @@ public class ScoreHandler {
 		return "SCORE: "+score;
 	}
 	
+	public int getScoreVal() {
+		return score;
+	}
+	
 	public String getScore() {
 		scoreStr = String.valueOf(score);
 		return scoreStr;

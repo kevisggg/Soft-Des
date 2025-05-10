@@ -252,7 +252,7 @@ EXIT X LENGTH: 80
 		g2.drawString(text, x, y);
 		
 		//RANK
-		text = "RANK: #20";
+		text = "RANK: "+gp.getCurPlayerRank();
 		x = getTextX(text);
 		y = gp.screenHeight/3+80;
 		g2.setColor(Color.white);//colorfront
@@ -269,6 +269,7 @@ EXIT X LENGTH: 80
 	            String username = dialog.getUsername();
 	            if (username != null) {
 	                gp.saveUsername(username);
+	                gp.setCurPlayerName(username);
 	                //gp.restartGame(); // Reset the game
 	            } else {
 	                // Optional: Force retry or exit
@@ -296,6 +297,7 @@ EXIT X LENGTH: 80
 	            gp.usernameRequested = false;
 	            gp.restartGame();
 	            gp.setPlayState();
+	            gp.saveData();
 	        }
 			mouseH.resetClick();
 		}

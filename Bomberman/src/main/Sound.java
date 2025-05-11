@@ -21,6 +21,8 @@ public class Sound {
 		sounds[6] = getClass().getResource("/sound/pause.wav");
 		sounds[7] = getClass().getResource("/sound/hissBomb.wav");
 		sounds[8] = getClass().getResource("/sound/gameover.wav");
+		sounds[9] = getClass().getResource("/sound/win.wav");
+		sounds[10] = getClass().getResource("/sound/enemyHit.wav");
 	}
 	
 	public void setFile(int i) {

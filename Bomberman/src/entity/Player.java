@@ -137,7 +137,6 @@ public class Player extends Entity{
 			gp.setOverState();
 			gp.playSFX(8);
 		}
-		
 		if(bombCooldown > 12) {
 			if(keyH.spacePressed==true) {
 				//check if bombs available, MAKE METHOD

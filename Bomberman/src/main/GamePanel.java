@@ -68,6 +68,7 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	// GAME STATE
 	private int gameState;
+	public final int instructionState = 0;
 	public final int playState = 1;
 	public final int pauseState = 2;
 	public final int gameoverState = 3;
@@ -111,7 +112,7 @@ public class GamePanel extends JPanel implements Runnable{
 		//asset.setObject();
 		asset.setEnemy();
 		//playMusic(0);
-		gameState = playState;
+		gameState = instructionState;
 	}
 	
 	public void newLevel() {//new level
@@ -236,6 +237,7 @@ public class GamePanel extends JPanel implements Runnable{
 				
 				if(colCheck.checkEntityExp(enemies.get(i).getX(), enemies.get(i).getY(), enemies.get(i).getWidth(), enemies.get(i).getHeight())) {
 					enemies.remove(i);
+					playSFX(10);
 					scoreH.addScoreElim();
 					break;
 				}
@@ -253,7 +255,8 @@ public class GamePanel extends JPanel implements Runnable{
 			}
 		}
 		if(enemies.size() == 0) {
-			gameState = winState;
+			setWinState();
+			playSFX(9);
 		}
 	}
 	
@@ -269,7 +272,10 @@ public class GamePanel extends JPanel implements Runnable{
 	}
 	
 	public void update() {
-		if(gameState == playState) {
+		if(gameState == instructionState) {
+			
+		}
+		else if(gameState == playState) {
 			playState();
 		}
 		

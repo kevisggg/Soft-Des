@@ -26,12 +26,13 @@ public class UI {
 	float alpha50 = 0.5f;
 	float alpha70 = 0.7f;
 	Font menu_60, menu_50, menu_30, hud_20, hud_10;
-	BufferedImage life, bomb, PUcap, PUrange, image;
+	BufferedImage life, bomb, PUcap, PUrange, image, ins;
 	ImageScaler s;
 	Rectangle resumeBounds = new Rectangle(324, 200, 120, 30);
 	Rectangle restartBounds = new Rectangle(314, 250, 140, 30);
 	Rectangle returnMenuBounds = new Rectangle(166, 408, 436, 30);
 	Rectangle exitBounds = new Rectangle(344, 300, 80, 30);
+	Rectangle okBounds = new Rectangle(353, 500, 62, 30);
 	Composite originalComposite;
 	
 	public UI(GamePanel gp, MouseHandler mouseH, ScoreHandler scoreH) {
@@ -47,6 +48,14 @@ public class UI {
 		PUcap = setupImage("/objects/PUcapacity.png", 15);
 		PUrange = setupImage("/objects/PUrange.png", 15);
 		bomb = setupImage("/objects/dynamite1.png", 10);
+		//s = new ImageScaler();
+		try {
+			ins = ImageIO.read(getClass().getResourceAsStream("/objects/instructions.png"));
+			//ins = s.scale(gp.screenHeight, gp.screenWidth, ins);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public BufferedImage setupImage(String path, int sizeDiff) {
@@ -72,7 +81,10 @@ public class UI {
 		g2.setFont(menu_60);
 		g2.setColor(Color.white);
 		drawHUD();
-		if(gp.getGameState() == gp.playState) {
+		if(gp.getGameState() == gp.instructionState) {
+			drawInstruction();
+		}
+		else if(gp.getGameState() == gp.playState) {
 			
 		}
 		else if(gp.getGameState() == gp.pauseState) {
@@ -173,6 +185,29 @@ public class UI {
 		g2.drawString(gp.player.getPURadius()+"x", gp.tileSize*2+30, 551);
 		g2.drawImage(PUcap, gp.tileSize*3+20, 536, null);
 		g2.drawString(gp.player.getPUcap()+"x", gp.tileSize*3+40, 551);
+	}
+	
+	public void drawInstruction() {
+		setBG();
+		g2.drawImage(ins, 0, 0, null);
+		g2.setColor(Color.white);
+		g2.setFont(menu_30);
+		String text = "OK";
+		int x = getTextX(text);
+		int y = 500;
+		addShadow(3, text, "#CC6600", "#FFD966", x, y+okBounds.height);
+		//System.out.println(x);
+		//g2.drawString("OK", okBounds.x, okBounds.y+okBounds.height);
+		//g2.draw(okBounds);
+		if(mouseH.getClicked()) {
+			Point p = mouseH.getPoint();
+			if (okBounds.contains(p)) {
+	            System.out.println("OK");
+	            gp.playSFX(5);
+	            gp.setPlayState();
+	        }
+			mouseH.resetClick();
+		}
 	}
 	
 	public void drawPauseScreen() {

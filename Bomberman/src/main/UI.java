@@ -48,12 +48,9 @@ public class UI {
 		PUcap = setupImage("/objects/PUcapacity.png", 15);
 		PUrange = setupImage("/objects/PUrange.png", 15);
 		bomb = setupImage("/objects/dynamite1.png", 10);
-		//s = new ImageScaler();
 		try {
 			ins = ImageIO.read(getClass().getResourceAsStream("/objects/instructions.png"));
-			//ins = s.scale(gp.screenHeight, gp.screenWidth, ins);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -196,9 +193,6 @@ public class UI {
 		int x = getTextX(text);
 		int y = 500;
 		addShadow(3, text, "#CC6600", "#FFD966", x, y+okBounds.height);
-		//System.out.println(x);
-		//g2.drawString("OK", okBounds.x, okBounds.y+okBounds.height);
-		//g2.draw(okBounds);
 		if(mouseH.getClicked()) {
 			Point p = mouseH.getPoint();
 			if (okBounds.contains(p)) {
@@ -319,7 +313,7 @@ EXIT X LENGTH: 80
 		//g2.draw(returnMenuBounds);
 		text = "RETURN TO MENU";
 		x = getTextX(text);
-		System.out.println("GET TEXT X " + x);
+		//System.out.println("GET TEXT X " + x);
 		y = gp.screenHeight/2+120;
 		g2.setColor(Color.white);//colorfront
 		//g2.drawString(text, x, y);
@@ -384,7 +378,7 @@ EXIT X LENGTH: 80
 	
 	public int getTextX(String text) {
 		int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth(); //CREATE TEXT LENGTH FUNCTION
-		System.out.println(text+" X LENGTH: " + length);
+		//System.out.println(text+" X LENGTH: " + length);
 		int x = gp.screenWidth/2 - length/2;
 		return x;
 	}

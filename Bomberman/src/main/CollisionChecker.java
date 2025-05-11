@@ -232,6 +232,8 @@ public class CollisionChecker {
 				int drop=gp.randomDrop();
 				if(drop!=0) {
 					asset.setObject(drop, x*gp.tileSize, y*gp.tileSize);
+					System.out.println("Setting drop " + drop + " at " + x + "," + y);
+					System.out.println("Total objects: " + gp.obj.size());
 				}
 				
 			}
@@ -249,6 +251,7 @@ public class CollisionChecker {
 					boolean remove = gp.obj.get(i).checkHits();
 					if(remove) {
 						gp.obj.remove(i);
+						asset.minusCnt();
 					}
 				}
 			}

@@ -143,6 +143,7 @@ public class Player extends Entity{
 				collisionTile = gp.getTileManager().mapTileNum[(worldX + collisionBox.x+5)/gp.tileSize][(worldY+collisionBox.y+10)/gp.tileSize];
 				System.out.println("=====" + worldX/gp.tileSize + "   " + worldY/gp.tileSize);
 				if(bombsPlaced < bombCnt && !gp.getTileManager().getTileCollision(collisionTile)) {
+					bombAlreadyPlaced = false;
 					for(Bomb b: gp.bombs) {
 						if((b.getX()+ collisionBox.x+5)/gp.tileSize == (worldX + collisionBox.x+5)/gp.tileSize && (b.getY()+ collisionBox.x+10)/gp.tileSize == (worldY+collisionBox.y+10)/gp.tileSize) {
 							bombAlreadyPlaced = true;
@@ -181,7 +182,7 @@ public class Player extends Entity{
 			if(objIndex!=999) {//if powerup picked up
 				//addScore(SCORE_PU);
 				//System.out.println("PICKUP: " + gp.obj.get(objIndex).name);
-				
+				gp.asset.minusCnt();
 				obj = gp.getObj(objIndex);
 				switch(obj.getName()) {
 				case "PUcapacity":

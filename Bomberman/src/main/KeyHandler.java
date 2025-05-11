@@ -68,5 +68,13 @@ public class KeyHandler implements KeyListener{
 		}
 		
 	}
+	
+	public void resetKeys() {
+		upPressed = false;
+	    downPressed = false;
+	    leftPressed = false;
+	    rightPressed = false;
+	    spacePressed = false;
+	}
 
 }

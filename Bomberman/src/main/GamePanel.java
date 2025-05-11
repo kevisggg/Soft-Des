@@ -121,9 +121,11 @@ public class GamePanel extends JPanel implements Runnable{
 		explosions.clear();
 		enemies.clear();
 	    obj.clear();
-		    // Reset tile map to its original state
-		tileMgr.loadMap("/maps/mapblank.txt"); // You'll need to implement this in TileManager
-		setupGame();
+		tileMgr.loadMap("/maps/mapblank.txt"); 
+		asset.setEnemy();
+		asset.resetObjCnt();
+		keyH.resetKeys();
+		setPlayState();
 	}
 	
 	public void restartGame() {//restart from level 1
@@ -296,27 +298,18 @@ public class GamePanel extends JPanel implements Runnable{
 	}
 	
 	private void explode(Bomb b) {
-		
-		//for(Explosion e: explosions) {
-		//	if(e.getExpStatus()) {
-				
-		//	}
-		//}
-			
-		
-		
 		int eX = b.getX()/tileSize;
 		int eY = b.getY()/tileSize;
-		System.out.println("x: " + eX + " y: " + eY);
+		//System.out.println("x: " + eX + " y: " + eY);
 		boolean upEmpty = colCheck.checkTileExp(eX, eY-1, true);
 		boolean downEmpty = colCheck.checkTileExp(eX, eY+1, true);
 		boolean leftEmpty = colCheck.checkTileExp(eX-1, eY, true);
 		boolean rightEmpty = colCheck.checkTileExp(eX+1, eY, true);
 		addExplosions(eX*tileSize, eY*tileSize);
 		for(int i = 0; i <= player.getBombRadius(); i++) {
-			System.out.println("ADDING EXPLOSIONS");
+			//System.out.println("ADDING EXPLOSIONS");
 			if(eY-i>0 && upEmpty) {
-				System.out.println("UP EMPTY");
+				//System.out.println("UP EMPTY");
 				
 				upEmpty = colCheck.checkTileExp(eX, eY-i, upEmpty);
 				if(upEmpty) {
@@ -324,14 +317,14 @@ public class GamePanel extends JPanel implements Runnable{
 				}
 			}
 			if(eY+i>0 && downEmpty) {
-				System.out.println("DOWN EMPTY");
+				//System.out.println("DOWN EMPTY");
 				downEmpty = colCheck.checkTileExp(eX, eY+i, downEmpty);
 				if(downEmpty) {
 					addExplosions(eX*tileSize, (eY+i)*tileSize);
 				}
 			}
 			if(eX-i>0 && leftEmpty) {
-				System.out.println("LEFT EMPTY");
+				//System.out.println("LEFT EMPTY");
 				//addExplosions((eX-i)*tileSize, eY*tileSize);
 				leftEmpty = colCheck.checkTileExp(eX-i, eY, leftEmpty);
 				if(leftEmpty) {
@@ -339,7 +332,7 @@ public class GamePanel extends JPanel implements Runnable{
 				}
 			}
 			if(eX+i>0 && rightEmpty) {
-				System.out.println("RIGHT EMPTY");
+				//System.out.println("RIGHT EMPTY");
 				//addExplosions((eX+i)*tileSize, eY*tileSize);
 				rightEmpty = colCheck.checkTileExp(eX+i, eY, rightEmpty);
 				if(rightEmpty) {
@@ -347,9 +340,9 @@ public class GamePanel extends JPanel implements Runnable{
 				}
 			}
 		}
-		System.out.println("EXPLOSIONS: " + explosions.size());
+		//System.out.println("EXPLOSIONS: " + explosions.size());
 		for(Explosion e: explosions) {
-			System.out.println("TRUE SET");
+			//System.out.println("TRUE SET");
 			e.setExpStatus(true);
 		}
 		playSFX(2);
@@ -501,7 +494,8 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	public String getCurPlayerRank() {
 		String rank = String.valueOf(currentPlayer.getRank());
-		if(rank=="0") {
+		System.out.println("rANK" + rank);
+		if(rank.equals("0")) {
 			rank = "-";
 		}
 		return rank;

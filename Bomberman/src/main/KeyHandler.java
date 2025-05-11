@@ -4,9 +4,9 @@ import java.awt.event.KeyListener;
 
 public class KeyHandler implements KeyListener{
 	
-	public boolean upPressed, downPressed, leftPressed, rightPressed, spacePressed;
-	int up, down, left, right, space;
-	GamePanel gp;
+	private boolean upPressed, downPressed, leftPressed, rightPressed, spacePressed;
+	//int up, down, left, right, space;
+	private GamePanel gp;
 	
 	public KeyHandler(GamePanel gp) {
 		this.gp = gp;
@@ -75,6 +75,26 @@ public class KeyHandler implements KeyListener{
 	    leftPressed = false;
 	    rightPressed = false;
 	    spacePressed = false;
+	}
+	
+	public boolean getUp() {
+		return upPressed;
+	}
+	
+	public boolean getDown() {
+		return downPressed;
+	}
+	
+	public boolean getLeft() {
+		return leftPressed;
+	}
+	
+	public boolean getRight() {
+		return rightPressed;
+	}
+	
+	public boolean getSpace() {
+		return spacePressed;
 	}
 
 }

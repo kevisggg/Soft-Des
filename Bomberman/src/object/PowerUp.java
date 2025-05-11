@@ -47,8 +47,6 @@ public class PowerUp {
 	}
 	
 	public void draw(Graphics2D g2, GamePanel gp) {
-		//int x=0;
-		//int y=0;
 		g2.drawImage(image, worldX, worldY, gp.tileSize, gp.tileSize, null);
 	}
 }

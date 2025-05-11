@@ -17,7 +17,7 @@ public class Player extends Entity{
 	private PowerUp obj;
 	//private ScoreHandler scoreH;
 	private int bombCnt, bombRadius, bombsPlaced, bombCooldown, lives, invincibleCnt, invincibleDuration, blinkInterval, collisionTile;
-	boolean  isInvincible, isVisible, bombAlreadyPlaced;
+	private boolean  isInvincible, isVisible, bombAlreadyPlaced;
 	
 	
 	public Player(GamePanel gp, KeyHandler keyH, CollisionChecker colCheck) {
@@ -26,6 +26,9 @@ public class Player extends Entity{
 		name = "Player";
 		collisionBox = new Rectangle(10, 16, 28, 32);
 		lives = 3;
+		speed = 3;
+		invincibleDuration = 180;//3.5 SECONDS
+		blinkInterval = 5;
 		
 		setDefaultVal();
 		getPlayerImage();
@@ -36,17 +39,12 @@ public class Player extends Entity{
 		worldY = gp.tileSize;
 		collisionBoxDefaultX = collisionBox.x;
 		collisionBoxDefaultY = collisionBox.y;
-		speed = 3;
 		direction = "down";
 		bombCnt = 1;///////
 		bombsPlaced = 0;
 		bombRadius = 1;//////////
 		bombCooldown = 0;
-		//lives = 3;
 		invincibleCnt = 0;
-		invincibleDuration = 180;//3.5 SECONDS
-		blinkInterval = 5;
-		//playerHit = false;
 		isInvincible = false;
 		isVisible = true;
 		bombAlreadyPlaced = false;
@@ -138,9 +136,9 @@ public class Player extends Entity{
 			gp.playSFX(8);
 		}
 		if(bombCooldown > 12) {
-			if(keyH.spacePressed==true) {
+			if(keyH.getSpace()==true) {
 				//check if bombs available, MAKE METHOD
-				collisionTile = gp.getTileManager().mapTileNum[(worldX + collisionBox.x+5)/gp.tileSize][(worldY+collisionBox.y+10)/gp.tileSize];
+				collisionTile = gp.getTileManager().getMapTileNum((worldX + collisionBox.x+5)/gp.tileSize, (worldY+collisionBox.y+10)/gp.tileSize);
 				System.out.println("=====" + worldX/gp.tileSize + "   " + worldY/gp.tileSize);
 				if(bombsPlaced < bombCnt && !gp.getTileManager().getTileCollision(collisionTile)) {
 					bombAlreadyPlaced = false;
@@ -159,17 +157,17 @@ public class Player extends Entity{
 			}
 			bombCooldown=0;
 		}
-		if(keyH.upPressed == true ||keyH.downPressed == true ||keyH.leftPressed == true ||keyH.rightPressed == true) {
-			if(keyH.upPressed == true) {
+		if(keyH.getUp() == true ||keyH.getDown() == true ||keyH.getLeft() == true || keyH.getRight() == true) {
+			if(keyH.getUp() == true) {
 				direction = "up";
 			}
-			else if(keyH.downPressed == true) {
+			else if(keyH.getDown() == true) {
 				direction = "down";
 			}
-			else if(keyH.leftPressed == true) {
+			else if(keyH.getLeft() == true) {
 				direction = "left";
 			}
-			else if(keyH.rightPressed == true) {
+			else if(keyH.getRight() == true) {
 				direction = "right";
 			}
 			
@@ -182,7 +180,7 @@ public class Player extends Entity{
 			if(objIndex!=999) {//if powerup picked up
 				//addScore(SCORE_PU);
 				//System.out.println("PICKUP: " + gp.obj.get(objIndex).name);
-				gp.asset.minusCnt();
+				gp.minusObjCnt();
 				obj = gp.getObj(objIndex);
 				switch(obj.getName()) {
 				case "PUcapacity":
@@ -199,7 +197,7 @@ public class Player extends Entity{
 			
 			//CHECK ENEMY COLLISION
 			if(!getInvincible()) {
-				if(colCheck.checkEnemy(this, gp.enemies)) {
+				if(colCheck.checkEnemy(this, gp.getEnemies())) {
 					collideEnemy();
 				}
 			}

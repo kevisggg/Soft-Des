@@ -14,9 +14,9 @@ import main.ImageScaler;
 
 public class TileManager {
 	
-	GamePanel gp;
-	public Tile[] tile;
-	public int mapTileNum[][];
+	private GamePanel gp;
+	private Tile[] tile;
+	private int mapTileNum[][];
 	
 	public TileManager(GamePanel gp) {
 		this.gp = gp;
@@ -33,13 +33,17 @@ public class TileManager {
 		setupImage(2, "/tile/box.png", true);
 	}
 	
+	public int getMapTileNum(int x, int y) {
+		return mapTileNum[x][y];
+	}
+	
 	public void setupImage(int index, String path, boolean collision) {
 		ImageScaler s = new ImageScaler();
 		try {
 			tile[index] = new Tile();
-			tile[index].image = ImageIO.read(getClass().getResourceAsStream(path));
-			tile[index].image = s.scale(gp.tileSize, gp.tileSize, tile[index].image);
-			tile[index].collision = collision;
+			tile[index].setImage(ImageIO.read(getClass().getResourceAsStream(path)));
+			tile[index].setImage(s.scale(gp.tileSize, gp.tileSize, tile[index].getImage()));
+			tile[index].setCollision(collision);
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
@@ -80,7 +84,7 @@ public class TileManager {
 	}
 	
 	public boolean getTileCollision(int i) {
-		return tile[i].collision;
+		return tile[i].getCollision();
 	}
 	
 	public void draw(Graphics2D g2) {
@@ -95,7 +99,7 @@ public class TileManager {
 		while(col<gp.maxScreenCol && row<gp.maxScreenRow) {
 			int tileIndex = mapTileNum[col][row];
 			
-			g2.drawImage(tile[tileIndex].image, x, y, null);
+			g2.drawImage(tile[tileIndex].getImage(), x, y, null);
 			col++;
 			x+=gp.tileSize;
 			

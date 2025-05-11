@@ -5,9 +5,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 public class MouseHandler implements MouseListener{
-	boolean clicked;
-	Point p;
-	GamePanel gp;
+	private boolean clicked;
+	private Point p;
+	private GamePanel gp;
 	
 	public MouseHandler(GamePanel gp) {
 		// TODO Auto-generated constructor stub

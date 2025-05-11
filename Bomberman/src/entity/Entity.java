@@ -13,8 +13,8 @@ import main.ImageScaler;
 
 //ABSTRACT store variables used in player npc classes
 public class Entity {
-	GamePanel gp;
-	CollisionChecker colCheck;
+	public GamePanel gp;
+	public CollisionChecker colCheck;
 	public int worldX, worldY;
 	public int speed;
 	public String name;

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import entity.Enemy;
 import entity.Entity;
 import entity.Explosion;
+import object.PowerUp;
 import tile.TileManager;
 
 public class CollisionChecker {
@@ -15,10 +16,11 @@ public class CollisionChecker {
 	private AssetSetter asset;
 	private Rectangle playerBox;
 	private boolean hit;
+	ArrayList<PowerUp> obj;
 	
 	public CollisionChecker(GamePanel gp) {
 		this.gp = gp;
-		this.asset = gp.asset;
+		this.asset = gp.getAssetSetter();
 		tileMgr = gp.getTileManager();
 	}
 	
@@ -38,33 +40,33 @@ public class CollisionChecker {
 		switch(entity.direction) {
 		case "up":
 			entityTopRow = (entityTop - entity.speed)/gp.tileSize;
-			tile1 = tileMgr.mapTileNum[entityLeftCol][entityTopRow];//TOP LEFT
-			tile2 = tileMgr.mapTileNum[entityRightCol][entityTopRow];//TOP RIGHT
-			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.getMapTileNum(entityLeftCol, entityTopRow);//TOP LEFT
+			tile2 = tileMgr.getMapTileNum(entityRightCol, entityTopRow);//TOP RIGHT
+			if(tileMgr.getTileCollision(tile1) == true || tileMgr.getTileCollision(tile2) == true) {
 				entity.collisionOn = true;
 			}
 			break;
 		case "down":
 			entityBottomRow = (entityBottom + entity.speed)/gp.tileSize;
-			tile1 = tileMgr.mapTileNum[entityLeftCol][entityBottomRow];//BOT LEFT
-			tile2 = tileMgr.mapTileNum[entityRightCol][entityBottomRow];//BOT RIGHT
-			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.getMapTileNum(entityLeftCol, entityBottomRow);//BOT LEFT
+			tile2 = tileMgr.getMapTileNum(entityRightCol, entityBottomRow);//BOT RIGHT
+			if(tileMgr.getTileCollision(tile1) == true || tileMgr.getTileCollision(tile2) == true) {
 				entity.collisionOn = true;
 			}
 			break;
 		case "left":
 			entityLeftCol = (entityLeft - entity.speed)/gp.tileSize;
-			tile1 = tileMgr.mapTileNum[entityLeftCol][entityTopRow];//TOP LEFT
-			tile2 = tileMgr.mapTileNum[entityLeftCol][entityBottomRow];//BOT LEFT
-			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.getMapTileNum(entityLeftCol, entityTopRow);//TOP LEFT
+			tile2 = tileMgr.getMapTileNum(entityLeftCol, entityBottomRow);//BOT LEFT
+			if(tileMgr.getTileCollision(tile1) == true || tileMgr.getTileCollision(tile2) == true) {
 				entity.collisionOn = true;
 			}
 			break;
 		case "right":
 			entityRightCol = (entityRight + entity.speed)/gp.tileSize;
-			tile1 = tileMgr.mapTileNum[entityRightCol][entityTopRow];//TOP RIGHT
-			tile2 = tileMgr.mapTileNum[entityRightCol][entityBottomRow];//BOT RIGHT
-			if(tileMgr.tile[tile1].collision == true || tileMgr.tile[tile2].collision == true) {
+			tile1 = tileMgr.getMapTileNum(entityRightCol, entityTopRow);//TOP RIGHT
+			tile2 = tileMgr.getMapTileNum(entityRightCol, entityBottomRow);//BOT RIGHT
+			if(tileMgr.getTileCollision(tile1) == true || tileMgr.getTileCollision(tile2) == true) {
 				entity.collisionOn = true;
 			}
 			break;
@@ -169,19 +171,19 @@ public class CollisionChecker {
 	
 	public int checkObject(Entity entity) {
 		int index=999;
-		
-		for(int i =0; i<gp.obj.size(); i++) {
-			if(gp.obj.get(i) != null) {
+		obj = gp.getObjects();
+		for(int i =0; i<obj.size(); i++) {
+			if(obj.get(i) != null) {
 				entity.collisionBox.x = entity.worldX + entity.collisionBox.x;
 				entity.collisionBox.y = entity.worldY + entity.collisionBox.y;
 				
-				gp.obj.get(i).collisionBox.x = gp.obj.get(i).collisionBox.x + gp.obj.get(i).getX();
-				gp.obj.get(i).collisionBox.y = gp.obj.get(i).collisionBox.y + gp.obj.get(i).getY();
+				obj.get(i).collisionBox.x = obj.get(i).collisionBox.x + obj.get(i).getX();
+				obj.get(i).collisionBox.y = obj.get(i).collisionBox.y + obj.get(i).getY();
 			
 				switch(entity.direction) {
 				case "up":
 					entity.collisionBox.y -= entity.speed;
-					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+					if(entity.collisionBox.intersects(obj.get(i).collisionBox)) {
 						//entity.collisionOn = true;
 						//hit = true;
 						index = i;
@@ -189,7 +191,7 @@ public class CollisionChecker {
 					break;
 				case "down":
 					entity.collisionBox.y += entity.speed;
-					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+					if(entity.collisionBox.intersects(obj.get(i).collisionBox)) {
 						//entity.collisionOn = true;
 						//hit = true;
 						index = i;
@@ -197,7 +199,7 @@ public class CollisionChecker {
 					break;
 				case "left":
 					entity.collisionBox.x -= entity.speed;
-					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+					if(entity.collisionBox.intersects(obj.get(i).collisionBox)) {
 						//entity.collisionOn = true;
 						//hit = true;
 						index = i;
@@ -205,7 +207,7 @@ public class CollisionChecker {
 					break;
 				case "right":
 					entity.collisionBox.x += entity.speed;
-					if(entity.collisionBox.intersects(gp.obj.get(i).collisionBox)) {
+					if(entity.collisionBox.intersects(obj.get(i).collisionBox)) {
 						//entity.collisionOn = true;
 						//hit = true;
 						index = i;
@@ -214,8 +216,8 @@ public class CollisionChecker {
 				}
 				entity.collisionBox.x = entity.collisionBoxDefaultX;
 				entity.collisionBox.y = entity.collisionBoxDefaultY;
-				gp.obj.get(i).collisionBox.x = gp.obj.get(i).collisionBoxDefaultX;
-				gp.obj.get(i).collisionBox.y = gp.obj.get(i).collisionBoxDefaultY;
+				obj.get(i).collisionBox.x = obj.get(i).collisionBoxDefaultX;
+				obj.get(i).collisionBox.y = obj.get(i).collisionBoxDefaultY;
 			}
 			
 		}
@@ -224,8 +226,9 @@ public class CollisionChecker {
 	}
 	
 	public boolean checkTileExp(int x, int y, boolean empty) {
-		int tile = tileMgr.mapTileNum[x][y];
-		if(tileMgr.tile[tile].collision == true) {
+		int tile = tileMgr.getMapTileNum(x, y);
+		obj = gp.getObjects();
+		if(tileMgr.getTileCollision(tile) == true) {//if colliding tile
 			//entity.collisionOn = true;
 			if(tile == 2) {//DESTROY TILE AND RANDOMIZE PU DROP
 				tileMgr.setTile(0, x, y);
@@ -233,7 +236,7 @@ public class CollisionChecker {
 				if(drop!=0) {
 					asset.setObject(drop, x*gp.tileSize, y*gp.tileSize);
 					System.out.println("Setting drop " + drop + " at " + x + "," + y);
-					System.out.println("Total objects: " + gp.obj.size());
+					System.out.println("Total objects: " + obj.size());
 				}
 				
 			}
@@ -242,15 +245,15 @@ public class CollisionChecker {
 			}
 		}
 		else {//REMOVE HIT POWER UPS
-			System.out.println(gp.obj.size());
-			for(int i=0;i<gp.obj.size();i++) {
-				System.out.println("X: " + x + " Y: " + y);
+			//System.out.println(obj.size());
+			for(int i=0;i<obj.size();i++) {
+				//System.out.println("X: " + x + " Y: " + y);
 				//System.out.println("OBJ X: " + obj.get(i).getX()/tileSize + "OBJ Y: " + obj.get(i).getY()/tileSize);
-				if(x==(gp.obj.get(i).getX())/gp.tileSize && y==(gp.obj.get(i).getY())/gp.tileSize) {
-					gp.obj.get(i).addHits();
-					boolean remove = gp.obj.get(i).checkHits();
+				if(x==(obj.get(i).getX())/gp.tileSize && y==(obj.get(i).getY())/gp.tileSize) {
+					obj.get(i).addHits();
+					boolean remove = obj.get(i).checkHits();
 					if(remove) {
-						gp.obj.remove(i);
+						obj.remove(i);
 						asset.minusCnt();
 					}
 				}

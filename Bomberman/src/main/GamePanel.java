@@ -39,22 +39,22 @@ public class GamePanel extends JPanel implements Runnable{
 	public final int screenWidth = tileSize * maxScreenCol; //768
 	public final int screenHeight = tileSize * maxScreenRow; //576
 	
-	int FPS = 60;
+	public final int FPS = 60;
 	
-	static final String DATA_FILE = "BM_Leaderboard.dat";
+	private static final String DATA_FILE = "BM_Leaderboard.dat";
 	private TileManager tileMgr = new TileManager(this);
 	private KeyHandler keyH = new KeyHandler(this);
 	private Sound sound = new Sound();
 	private MouseHandler mouseH = new MouseHandler(this);
 	private ScoreHandler scoreH = new ScoreHandler();
-	public AssetSetter asset = new AssetSetter(this);
+	private AssetSetter asset = new AssetSetter(this);
 	private CollisionChecker colCheck = new CollisionChecker(this);
 	Thread gameThread;
 	public Player player = new Player(this, keyH, colCheck);
 	//public Enemy enemy[] = new Enemy[5];
-	public ArrayList<Enemy> enemies = new ArrayList<>();
+	private ArrayList<Enemy> enemies = new ArrayList<>();
 	//public SuperObject obj[] = new SuperObject[5];
-	public ArrayList<PowerUp> obj = new ArrayList<>();
+	private ArrayList<PowerUp> obj = new ArrayList<>();
 	public ArrayList<Bomb> bombs = new ArrayList<>();
 	public ArrayList<Explosion> explosions = new ArrayList<>();
 	BMPlayerLeaderboard currentPlayer;
@@ -88,13 +88,13 @@ public class GamePanel extends JPanel implements Runnable{
 		loadData();
 	}
 	
-	public void saveUsername(String username) {
+	/*public void saveUsername(String username) {
 	    try (FileWriter writer = new FileWriter("scores.txt", true)) {
 	        writer.write(username + "\n");
 	    } catch (IOException e) {
 	        e.printStackTrace();
 	    }
-	}
+	}*/
 	
 	public TileManager getTileManager() {
 		return tileMgr;
@@ -106,6 +106,18 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	public ScoreHandler getScoreHandler() {
 		return scoreH;
+	}
+	
+	public AssetSetter getAssetSetter() {
+		return asset;
+	}
+	
+	public ArrayList<Enemy> getEnemies() {
+		return enemies;
+	}
+	
+	public ArrayList<PowerUp> getObjects() {
+		return obj;
 	}
 	
 	public void setupGame() {
@@ -423,9 +435,11 @@ public class GamePanel extends JPanel implements Runnable{
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D)g;
-		//TILE
+		//RUNTIME
 		//long timeStart = 0;
 		//timeStart = System.nanoTime();
+		
+		//TILE
 		tileMgr.draw(g2);
 		
 		//OBJECT
@@ -528,6 +542,28 @@ public class GamePanel extends JPanel implements Runnable{
 	            System.out.println("Error saving data.");
 	            e.printStackTrace();
 	        }
+	}
+
+	public void minusObjCnt() {
+		// TODO Auto-generated method stub
+		asset.minusCnt();
+	}
+	
+	public void addEnemy(Enemy enemy) {
+		enemies.add(enemy);
+	}
+	
+	public void addObj(PowerUp pu) {
+		obj.add(pu);
+	}
+
+	public void setObjXY(int x, int y) {
+		obj.getLast().setX(x);
+		obj.getLast().setY(y);		
+	}
+	
+	public void removeFirstObj() {
+		obj.remove(0);
 	}
 }
 

@@ -6,10 +6,9 @@ public class ScoreHandler {
 	private final static int SCORE_LVL = 300;
 	private int score;
 	private String scoreStr;
-	//GamePanel gp;
+	
 	
 	public ScoreHandler() {
-		//this.gp=gp;
 		score = 0;
 	}
 	

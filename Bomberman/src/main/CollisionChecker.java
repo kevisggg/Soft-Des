@@ -2,10 +2,12 @@ package main;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Random;
 
 import entity.Enemy;
 import entity.Entity;
 import entity.Explosion;
+import entity.Player;
 import object.PowerUp;
 import tile.TileManager;
 
@@ -16,12 +18,16 @@ public class CollisionChecker {
 	private AssetSetter asset;
 	private Rectangle playerBox;
 	private boolean hit;
-	ArrayList<PowerUp> obj;
+	private ArrayList<PowerUp> obj;
+	//private Player player;
+	private ArrayList<Explosion> explosions;
 	
-	public CollisionChecker(GamePanel gp) {
+	public CollisionChecker(GamePanel gp, AssetSetter asset, TileManager tileMgr, ArrayList<Explosion> explosions) {
 		this.gp = gp;
-		this.asset = gp.getAssetSetter();
-		tileMgr = gp.getTileManager();
+		this.asset = asset;
+		this.tileMgr = tileMgr;
+		//this.player = player;
+		this.explosions = explosions;
 	}
 	
 	public void checkTile(Entity entity) {
@@ -123,39 +129,40 @@ public class CollisionChecker {
 		return hit;
 	}
 	
-	public boolean checkPlayer(Entity entity) {
+	public boolean checkPlayer(Entity entity, Player player) {
 		//for()
+		//this.player = player;
 		boolean hit = false;
 		entity.collisionBox.x = entity.worldX + entity.collisionBox.x;
 		entity.collisionBox.y = entity.worldY + entity.collisionBox.y;
-		gp.player.collisionBox.x = gp.player.collisionBox.x + gp.player.worldX;
-		gp.player.collisionBox.y = gp.player.collisionBox.y + gp.player.worldY;
+		player.collisionBox.x = player.collisionBox.x + player.worldX;
+		player.collisionBox.y = player.collisionBox.y + player.worldY;
 		
 		switch(entity.direction) {
 		case "up":
 			entity.collisionBox.y -= entity.speed;
-			if(entity.collisionBox.intersects(gp.player.collisionBox)) {
+			if(entity.collisionBox.intersects(player.collisionBox)) {
 				//entity.collisionOn = true;
 				hit = true;
 			}
 			break;
 		case "down":
 			entity.collisionBox.y += entity.speed;
-			if(entity.collisionBox.intersects(gp.player.collisionBox)) {
+			if(entity.collisionBox.intersects(player.collisionBox)) {
 				//entity.collisionOn = true;
 				hit = true;
 			}
 			break;
 		case "left":
 			entity.collisionBox.x -= entity.speed;
-			if(entity.collisionBox.intersects(gp.player.collisionBox)) {
+			if(entity.collisionBox.intersects(player.collisionBox)) {
 				//entity.collisionOn = true;
 				hit = true;
 			}
 			break;
 		case "right":
 			entity.collisionBox.x += entity.speed;
-			if(entity.collisionBox.intersects(gp.player.collisionBox)) {
+			if(entity.collisionBox.intersects(player.collisionBox)) {
 				//entity.collisionOn = true;
 				hit = true;
 			}
@@ -164,8 +171,8 @@ public class CollisionChecker {
 		//RESET BOX VALUES
 		entity.collisionBox.x = entity.collisionBoxDefaultX;
 		entity.collisionBox.y = entity.collisionBoxDefaultY;
-		gp.player.collisionBox.x = gp.player.collisionBoxDefaultX;
-		gp.player.collisionBox.y = gp.player.collisionBoxDefaultY;
+		player.collisionBox.x = player.collisionBoxDefaultX;
+		player.collisionBox.y = player.collisionBoxDefaultY;
 		return hit;
 	}
 	
@@ -232,7 +239,7 @@ public class CollisionChecker {
 			//entity.collisionOn = true;
 			if(tile == 2) {//DESTROY TILE AND RANDOMIZE PU DROP
 				tileMgr.setTile(0, x, y);
-				int drop=gp.randomDrop();
+				int drop=randomDrop();
 				if(drop!=0) {
 					asset.setObject(drop, x*gp.tileSize, y*gp.tileSize);
 					System.out.println("Setting drop " + drop + " at " + x + "," + y);
@@ -275,7 +282,7 @@ public class CollisionChecker {
 	public boolean checkEntityExp(int x, int y, int width, int height) {
 		playerBox = new Rectangle(x,y,width,height);
 		hit=false;
-		for (Explosion e : gp.explosions) {
+		for (Explosion e : explosions) {
 	        if (e.collisionBox.intersects(playerBox)) {
 	        	//gp.player.setHit(true);
 		       	//gp.player.setInvincible(true);
@@ -284,5 +291,20 @@ public class CollisionChecker {
 	        }
 	    }
 		return hit;    
+	}
+	
+	public int randomDrop() {
+		int drop=0;
+		Random random = new Random();
+		int i = random.nextInt(100)+1;//from 1-4
+		if(i>=1 && i<=15) {
+			drop = 1;
+			System.out.println(drop+": CAPACITY PU");
+		}
+		else if(i>=16 && i<=30) {
+			drop = 2;
+			System.out.println(drop+": RANGE PU");
+		}
+		return drop;
 	}
 }

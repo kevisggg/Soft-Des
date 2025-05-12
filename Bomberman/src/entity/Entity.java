@@ -64,9 +64,9 @@ public class Entity {
 		collisionOn = false;
 		colCheck.checkTile(this);
 		
-		if(!gp.player.getInvincible()) {
-			if(colCheck.checkPlayer(this)) {
-				gp.player.collideEnemy();
+		if(!gp.getPlayer().getInvincible()) {
+			if(colCheck.checkPlayer(this, gp.getPlayer())) {
+				gp.getPlayer().collideEnemy();
 			}
 		}
 		

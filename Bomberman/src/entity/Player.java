@@ -103,8 +103,8 @@ public class Player extends Entity{
 	}
 	
 	public void dropBomb() {
-		Bomb b = new Bomb((worldX + gp.player.collisionBox.x + 5)/gp.tileSize*gp.tileSize, (worldY+gp.player.collisionBox.y+10)/gp.tileSize*gp.tileSize, gp);
-		gp.bombs.add(b);
+		Bomb b = new Bomb((worldX + collisionBox.x + 5)/gp.tileSize*gp.tileSize, (worldY+collisionBox.y+10)/gp.tileSize*gp.tileSize, gp);
+		gp.getBombs().add(b);
 		bombsPlaced++;
 		gp.playSFX(1);
 		gp.playSFX(7);
@@ -142,7 +142,7 @@ public class Player extends Entity{
 				System.out.println("=====" + worldX/gp.tileSize + "   " + worldY/gp.tileSize);
 				if(bombsPlaced < bombCnt && !gp.getTileManager().getTileCollision(collisionTile)) {
 					bombAlreadyPlaced = false;
-					for(Bomb b: gp.bombs) {
+					for(Bomb b: gp.getBombs()) {
 						if((b.getX()+ collisionBox.x+5)/gp.tileSize == (worldX + collisionBox.x+5)/gp.tileSize && (b.getY()+ collisionBox.x+10)/gp.tileSize == (worldY+collisionBox.y+10)/gp.tileSize) {
 							bombAlreadyPlaced = true;
 							System.out.println("bombAlreadyPlaced TRUE");

@@ -93,8 +93,8 @@ public class UI {
 		this.originalComposite = g2.getComposite();
 		//g2.setFont(menu_60);
 		//g2.setColor(Color.white);
-		drawHUD();
-		if(gp.getGameState() == gp.instructionState) {
+		//drawHUD();
+		/*if(gp.getGameState() == gp.instructionState) {
 			drawInstruction();
 		}
 		else if(gp.getGameState() == gp.playState) {
@@ -111,7 +111,8 @@ public class UI {
 			
 			drawWinScreen();
 			
-		}
+		}*/
+		gp.getGameState().draw();
 	}
 	
 	/*public void setComp(float alpha) {
@@ -154,7 +155,7 @@ public class UI {
 		g2.drawString("Lives:", 10, 34);
 		x = gp.tileSize*3;
 		y = 5;
-		for(int i=0; i<gp.player.getLives(); i++) {
+		for(int i=0; i<gp.getPlayer().getLives(); i++) {
 			g2.drawImage(life, x, y, null);
 			x += gp.tileSize;
 		}
@@ -187,11 +188,11 @@ public class UI {
 		g2.setFont(hud_13);
 		g2.setColor(Color.WHITE);
 		g2.drawImage(bomb, gp.tileSize, 535, null);
-		g2.drawString(gp.player.getBombsAvail()+"x", gp.tileSize+20, 551);
+		g2.drawString(gp.getPlayer().getBombsAvail()+"x", gp.tileSize+20, 551);
 		g2.drawImage(PUrange, gp.tileSize*2+10, 536, null);
-		g2.drawString(gp.player.getPURadius()+"x", gp.tileSize*2+30, 551);
+		g2.drawString(gp.getPlayer().getPURadius()+"x", gp.tileSize*2+30, 551);
 		g2.drawImage(PUcap, gp.tileSize*3+20, 536, null);
-		g2.drawString(gp.player.getPUcap()+"x", gp.tileSize*3+40, 551);
+		g2.drawString(gp.getPlayer().getPUcap()+"x", gp.tileSize*3+40, 551);
 	}
 	
 	public void drawInstruction() {
@@ -215,8 +216,6 @@ public class UI {
 	}
 	
 	public void drawPauseScreen() {
-		//g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha50));
-		//setComp(alpha50);
 		setBG();
 		g2.setFont(menu_60);
 		text = "PAUSED";
@@ -225,27 +224,12 @@ public class UI {
 		y = gp.screenHeight/3;
 		
 		addShadow(5, text, backColor, frontColor, x, y);
-		/*g2.setColor(getColor("#CC6600"));
-		g2.drawString(text, x+5, y+5);
-		g2.setColor(getColor("#FFD966"));
-		g2.drawString(text, x, y);*/
-
-		// In your paintComponent or draw method
+		
 		g2.setColor(Color.white);
 		g2.setFont(hud_20);
-		//g2.setFont(new Font("Arial", Font.BOLD, 24));
-		//g2.draw(resumeBounds);
-		//g2.draw(restartBounds);
-		//g2.draw(exitBounds);
 		g2.drawString("RESUME", resumeBounds.x, resumeBounds.y+resumeBounds.height);
 		g2.drawString("RESTART", restartBounds.x, restartBounds.y+restartBounds.height);
 		g2.drawString("EXIT", exitBounds.x, exitBounds.y+exitBounds.height);
-		//int hh = getTextX("RESUME");
-		//System.out.println(hh);
-		//hh = getTextX("RESTART");
-		//System.out.println(hh);
-		//hh = getTextX("EXIT");
-		//System.out.println(hh);
 		/*RESUME X LENGTH: 120
 324
 RESTART X LENGTH: 140
@@ -307,7 +291,6 @@ EXIT X LENGTH: 80
 	}
 	
 	private void returnToMenu() {
-		// TODO Auto-generated method stub
 		g2.drawString("RETURN TO MENU", returnMenuBounds.x, returnMenuBounds.y+returnMenuBounds.height);
 		//g2.draw(returnMenuBounds);
 		text = "RETURN TO MENU";
@@ -342,7 +325,6 @@ EXIT X LENGTH: 80
 
 		            String username = dialog.getUsername();
 		            if (username != null) {
-		                //gp.saveUsername(username);
 		                gp.setCurPlayerName(username);
 		                //gp.restartGame(); // Reset the game
 		            }
@@ -353,23 +335,6 @@ EXIT X LENGTH: 80
 	        });
 		}
 	}
-	
-	/*public void showUsernameDialog() {
-        SwingUtilities.invokeLater(() -> {
-            UsernameDialog dialog = new UsernameDialog(
-                (JFrame) SwingUtilities.getWindowAncestor(gp)
-            );
-            dialog.setVisible(true);
-            handleDialogResult(dialog);
-        });
-    }
-
-    private void handleDialogResult(UsernameDialog dialog) {
-        if(dialog.getUsername() != null) {
-            gp.saveUsername(dialog.getUsername());
-            gp.restartGame();
-        }
-    }*/
 	
 	public void drawWinScreen() {
 		//g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha50));
@@ -384,8 +349,6 @@ EXIT X LENGTH: 80
 		text="Loading Next Level...";
 		x = getTextX(text);
 		y = (gp.screenHeight/2)+50;
-		//g2.setColor(getColor("#CC6600"));
-		//g2.drawString(text, x+2, y+2);
 		g2.setColor(Color.white);
 		g2.drawString(text, x, y);
 	}

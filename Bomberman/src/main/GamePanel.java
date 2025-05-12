@@ -48,33 +48,25 @@ public class GamePanel extends JPanel implements Runnable{
 	private MouseHandler mouseH = new MouseHandler(this);
 	private ScoreHandler scoreH = new ScoreHandler();
 	private AssetSetter asset = new AssetSetter(this);
-	private CollisionChecker colCheck = new CollisionChecker(this);
-	Thread gameThread;
-	public Player player = new Player(this, keyH, colCheck);
-	//public Enemy enemy[] = new Enemy[5];
+	
 	private ArrayList<Enemy> enemies = new ArrayList<>();
-	//public SuperObject obj[] = new SuperObject[5];
 	private ArrayList<PowerUp> obj = new ArrayList<>();
-	public ArrayList<Bomb> bombs = new ArrayList<>();
-	public ArrayList<Explosion> explosions = new ArrayList<>();
+	private ArrayList<Bomb> bombs = new ArrayList<>();
+	private ArrayList<Explosion> explosions = new ArrayList<>();
 	BMPlayerLeaderboard currentPlayer;
 	public static BMLeaderboardSorter bml = new BMLeaderboardSorter();
+	private GameStateHandler gamestateH = new GameStateHandler();
+	private CollisionChecker colCheck = new CollisionChecker(this, asset, tileMgr, explosions);
 	
-	//public final int usernameState = 5; // New game state
-    //private JTextField usernameField; // Text field for input
+	private Player player = new Player(this, keyH, colCheck);
     public boolean usernameRequested = false;
 	
 	public UI ui = new UI(this, mouseH, scoreH);
 	
 	// GAME STATE
-	private int gameState;
-	public final int instructionState = 0;
-	public final int playState = 1;
-	public final int pauseState = 2;
-	public final int gameoverState = 3;
-	public final int winState = 4;
-	int cnt=0, level=1;
+	private int level=1;
 	
+	Thread gameThread;
 	
 	public GamePanel() {
 		
@@ -86,15 +78,8 @@ public class GamePanel extends JPanel implements Runnable{
 		this.setFocusable(true);
 		usernameRequested = false;
 		loadData();
+		setInsState();
 	}
-	
-	/*public void saveUsername(String username) {
-	    try (FileWriter writer = new FileWriter("scores.txt", true)) {
-	        writer.write(username + "\n");
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	    }
-	}*/
 	
 	public TileManager getTileManager() {
 		return tileMgr;
@@ -120,11 +105,20 @@ public class GamePanel extends JPanel implements Runnable{
 		return obj;
 	}
 	
+	public ArrayList<Bomb> getBombs() {
+		return bombs;
+	}
+	
+	public Player getPlayer() {
+	    return player;
+	}
+	
 	public void setupGame() {
 		//asset.setObject();
 		asset.setEnemy();
 		//playMusic(0);
-		gameState = instructionState;
+		//add state initialization
+		setInsState();
 	}
 	
 	public void newLevel() {//new level
@@ -141,31 +135,39 @@ public class GamePanel extends JPanel implements Runnable{
 	}
 	
 	public void restartGame() {//restart from level 1
-		// TODO Auto-generated method stub
 		player=new Player(this, keyH, colCheck);
 		scoreH.resetScore();
 	    level = 1;
 		newLevel();
 	}
 	
-	public int getGameState() {
-		return gameState;
+	public void updateLevel() {
+		level = level+1;
+	}
+	
+	public GameState getGameState() {
+		return gamestateH.getState();
+	}
+	
+	public void setInsState() {
+		gamestateH.setState(new InsState(ui));
+		
 	}
 	
 	public void setPlayState() {
-		gameState = playState;
+		gamestateH.setState(new PlayState(this, player, colCheck, bombs, explosions, enemies, ui));
 	}
 	
 	public void setPauseState() {
-		gameState = pauseState;
+		gamestateH.setState(new PauseState(this, ui));
 	}
 	
 	public void setOverState() {
-		gameState = gameoverState;
+		gamestateH.setState(new GameOverState(ui));
 	}
 	
 	public void setWinState() {
-		gameState = winState;
+		gamestateH.setState(new WinState(this, ui));
 	}
 	
 	public void startGameThread() {
@@ -200,222 +202,12 @@ public class GamePanel extends JPanel implements Runnable{
 		
 	}
 	
-	public void playState() {
-		player.update();
-		//CREATE EXPLOSION HIT METHOD
-		if(!player.getInvincible()) {
-			/*for(Explosion e: explosions) {
-				//if(e.getExpStatus() && !e.getHasHit()) {
-					
-				//}
-				//System.out.println(player.getX()/tileSize + "/" + e.getX()/tileSize + "        " + player.getY()/tileSize + "/" + e.getY()/tileSize);
-				if(player.getX()/tileSize == e.getX()/tileSize && player.getY()/tileSize == e.getY()/tileSize ) {
-					System.out.println("SETTING PLAYER HIT ======");
-					player.setHit(true);
-					//e.setHit(true);
-					player.setInvincible(true);
-					break;
-				}
-			}*/
-			if(colCheck.checkEntityExp(player.getX(), player.getY(), player.getWidth(), player.getHeight())) {
-				player.setHit(true);
-		       	player.setInvincible(true);
-			}
-		}
-		
-		//System.out.println(bombs.size());/////////////////////
-		for(int i = bombs.size() - 1; i >= 0; i--){
-			Bomb b = bombs.get(i);
-			if(b!=null) {
-				b.update();
-				if(!b.getBombStatus()) {
-					explode(b);
-					bombs.remove(i);
-					player.removeBombsPlaced();
-				}
-			}
-			//System.out.println("[" + (b.getX() + player.collisionBox.x)/tileSize + "] [" + (b.getY()+player.collisionBox.y+10)/tileSize + "]");
-		}
-		for (int i = explosions.size() - 1; i >= 0; i--) {
-            Explosion e = explosions.get(i);
-            e.update(); // Add an update method to Explosion for timing
-            if (!e.getExpStatus()) { // Add an expiration check in Explosion
-                explosions.remove(i);
-            }
-        }
-		for(int i = 0; i<enemies.size(); i++) {
-			//System.out.println("CHEKCING ENEMIES");
-			enemies.get(i).update();
-			for(Explosion e: explosions) {
-				//if(e.getExpStatus() && !e.getHasHit()) {
-				
-				if(colCheck.checkEntityExp(enemies.get(i).getX(), enemies.get(i).getY(), enemies.get(i).getWidth(), enemies.get(i).getHeight())) {
-					enemies.remove(i);
-					playSFX(10);
-					scoreH.addScoreElim();
-					break;
-				}
-				//}
-				//System.out.println(player.getX()/tileSize + "/" + e.getX()/tileSize + "        " + player.getY()/tileSize + "/" + e.getY()/tileSize);
-				/*if(enemies.get(i).getX()/tileSize == e.getX()/tileSize && enemies.get(i).getY()/tileSize == e.getY()/tileSize ) {
-					System.out.println("SETTING ENEMY HIT ======");
-					enemies.remove(i);
-					//addScore()
-					//player.addScore(i);
-					scoreH.addScoreElim();
-					//e.setHit(true);
-					break;
-				}*/
-			}
-		}
-		if(enemies.size() == 0) {
-			setWinState();
-			playSFX(9);
-		}
-	}
-	
-	public void winState() {
-		//TIMER
-		cnt++;
-		if(cnt>=100) {
-			cnt=0;
-			level=level+1;
-			scoreH.addScoreLvl();
-			newLevel();
-		}
-	}
-	
 	public void update() {
-		if(gameState == instructionState) {
-			
-		}
-		else if(gameState == playState) {
-			playState();
-		}
-		
-		else if(gameState == pauseState) {
-			
-		}
-		
-		else if(gameState == gameoverState) {
-			
-		}
-		else if(gameState == winState) {
-			winState();
-		}
+		gamestateH.request();
 	}
 	
 	public void addExplosions(int x, int y) {
 		explosions.add(new Explosion(x, y, this));
-	}
-	
-	private void explode(Bomb b) {
-		int eX = b.getX()/tileSize;
-		int eY = b.getY()/tileSize;
-		//System.out.println("x: " + eX + " y: " + eY);
-		boolean upEmpty = colCheck.checkTileExp(eX, eY-1, true);
-		boolean downEmpty = colCheck.checkTileExp(eX, eY+1, true);
-		boolean leftEmpty = colCheck.checkTileExp(eX-1, eY, true);
-		boolean rightEmpty = colCheck.checkTileExp(eX+1, eY, true);
-		addExplosions(eX*tileSize, eY*tileSize);
-		for(int i = 0; i <= player.getBombRadius(); i++) {
-			//System.out.println("ADDING EXPLOSIONS");
-			if(eY-i>0 && upEmpty) {
-				//System.out.println("UP EMPTY");
-				
-				upEmpty = colCheck.checkTileExp(eX, eY-i, upEmpty);
-				if(upEmpty) {
-					addExplosions(eX*tileSize, (eY-i)*tileSize);
-				}
-			}
-			if(eY+i>0 && downEmpty) {
-				//System.out.println("DOWN EMPTY");
-				downEmpty = colCheck.checkTileExp(eX, eY+i, downEmpty);
-				if(downEmpty) {
-					addExplosions(eX*tileSize, (eY+i)*tileSize);
-				}
-			}
-			if(eX-i>0 && leftEmpty) {
-				//System.out.println("LEFT EMPTY");
-				//addExplosions((eX-i)*tileSize, eY*tileSize);
-				leftEmpty = colCheck.checkTileExp(eX-i, eY, leftEmpty);
-				if(leftEmpty) {
-					addExplosions((eX-i)*tileSize, eY*tileSize);
-				}
-			}
-			if(eX+i>0 && rightEmpty) {
-				//System.out.println("RIGHT EMPTY");
-				//addExplosions((eX+i)*tileSize, eY*tileSize);
-				rightEmpty = colCheck.checkTileExp(eX+i, eY, rightEmpty);
-				if(rightEmpty) {
-					addExplosions((eX+i)*tileSize, eY*tileSize);
-				}
-			}
-		}
-		//System.out.println("EXPLOSIONS: " + explosions.size());
-		for(Explosion e: explosions) {
-			//System.out.println("TRUE SET");
-			e.setExpStatus(true);
-		}
-		playSFX(2);
-	}
-	
-	/*public boolean checkTileExp(int x, int y, boolean empty) {
-		int tile = tileMgr.mapTileNum[x][y];
-		if(tileMgr.tile[tile].collision == true) {
-			//entity.collisionOn = true;
-			if(tile == 2) {//DESTROY TILE AND RANDOMIZE PU DROP
-				tileMgr.setTile(0, x, y);
-				int drop=randomDrop();
-				if(drop!=0) {
-					asset.setObject(drop, x*tileSize, y*tileSize);
-				}
-				
-			}
-			else {
-				empty = false;
-			}
-		}
-		else {//REMOVE HIT POWER UPS
-			System.out.println(obj.size());
-			for(int i=0;i<obj.size();i++) {
-				System.out.println("X: " + x + " Y: " + y);
-				System.out.println("OBJ X: " + obj.get(i).getX()/tileSize + "OBJ Y: " + obj.get(i).getY()/tileSize);
-				if(x==(obj.get(i).getX())/tileSize && y==(obj.get(i).getY())/tileSize) {
-					obj.get(i).addHits();
-					boolean remove = obj.get(i).checkHits();
-					if(remove) {
-						obj.remove(i);
-					}
-				}
-			}
-			
-			 *boolean = assetPresent[x][y]; --> in AssetSetter
-			 *OR
-			 *for(inti = 0; i<obj,size; obj++SuperObject obj: obj){
-			 * if get(x),get(y) = x,y
-			 *obj.remove
-			 *
-			 *
-			 *}
-			 *
-		}
-		return empty;
-	}*/
-	
-	public int randomDrop() {
-		int drop=0;
-		Random random = new Random();
-		int i = random.nextInt(100)+1;//from 1-4
-		if(i>=1 && i<=15) {
-			drop = 1;
-			System.out.println(drop+": CAPACITY PU");
-		}
-		else if(i>=16 && i<=30) {
-			drop = 2;
-			System.out.println(drop+": RANGE PU");
-		}
-		return drop;
 	}
 	
 	public PowerUp getObj(int i) {
@@ -436,8 +228,8 @@ public class GamePanel extends JPanel implements Runnable{
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D)g;
 		//RUNTIME
-		//long timeStart = 0;
-		//timeStart = System.nanoTime();
+		long timeStart = 0;
+		timeStart = System.nanoTime();
 		
 		//TILE
 		tileMgr.draw(g2);
@@ -479,9 +271,9 @@ public class GamePanel extends JPanel implements Runnable{
 		//g2.fillRect(player.worldX + player.collisionBox.x, player.worldY + player.collisionBox.y, player.collisionBox.width, player.collisionBox.height);
 		//UI
 		ui.draw(g2);
-		//long timeEnd = System.nanoTime();
-		//long passed = timeEnd - timeStart;
-		//System.out.println(passed);
+		long timeEnd = System.nanoTime();
+		long passed = timeEnd - timeStart;
+		System.out.println(passed);
 		g2.dispose();
 	}
 
@@ -545,7 +337,6 @@ public class GamePanel extends JPanel implements Runnable{
 	}
 
 	public void minusObjCnt() {
-		// TODO Auto-generated method stub
 		asset.minusCnt();
 	}
 	

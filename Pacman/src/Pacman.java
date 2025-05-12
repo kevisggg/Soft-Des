@@ -1,0 +1,1479 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.List;
+
+public class Pacman extends JPanel implements ActionListener, KeyListener {
+    
+    class Block {
+        int x, y, width, height;
+        Image image;
+        int startX, startY;
+        char direction = 'U'; // U D L R
+        int velocityX = 0;
+        int velocityY = 0;
+        int collisionPadding = 4; // Padding on all sides
+        GhostState state = GhostState.NORMAL;
+        long stateTimer = 0;
+        int personality;
+
+        Block(Image image, int x, int y, int height, int width) {
+            this.x = x;
+            this.y = y;
+            this.height = height;
+            this.width = width;
+            this.image = image;
+            this.startX = x;
+            this.startY = y;
+        }
+
+        void updateDirection(char direction) {
+            char prevDirection = this.direction;
+            this.direction = direction;
+            updateVelocity();
+            this.x += this.velocityX;
+            this.y += this.velocityY;
+
+            // Collision check with walls after move
+            for (Block wall : walls) {
+                if (collision(this, wall)) {
+                    this.x -= this.velocityX;
+                    this.y -= this.velocityY;
+                    this.direction = prevDirection;
+                    updateVelocity();
+                }
+            }
+        }
+
+        private void updateVelocity() {
+            int speed;
+
+            if (this == pacman) {
+                speed = PACMAN_SPEED;
+            } else {
+                // Ghost speeds
+                if (this.state == GhostState.FRIGHTENED) {
+                    speed = FRIGHTENED_GHOST_SPEED;
+                } else {
+                    speed = BASE_GHOST_SPEED;
+                }
+            }
+
+
+            // Set velocity based on direction
+            if (this.direction == 'U') {
+                this.velocityX = 0;
+                this.velocityY = -speed;
+            } else if (this.direction == 'D') {
+                this.velocityX = 0;
+                this.velocityY = speed;
+            } else if (this.direction == 'L') {
+                this.velocityY = 0;
+                this.velocityX = -speed;
+            } else if (this.direction == 'R') {
+                this.velocityY = 0;
+                this.velocityX = speed;
+            }
+        }
+
+
+        void reset() {
+            this.x = this.startX;
+            this.y = this.startY;
+            this.velocityX = 0;
+            this.velocityY = 0;
+            this.direction = 'R'; // Reset to default right-facing direction
+        }
+    }
+
+    // Game board dimensions
+    private int columnCount = 19;
+    private int rowCount = 21;
+    private static int tileSize = 32;
+    private int boardWidth = columnCount * tileSize;
+    private int boardHeight = rowCount * tileSize;
+
+    // Ghost personality identifiers
+    private static final int BLINKY = 0;
+    private static final int PINKY = 1;
+    private static final int INKY = 2;
+    private static final int CLYDE = 3;
+    private static final int BASE_GHOST_SPEED = tileSize / 5; // Slower than original tileSize/4
+    private static final int FRIGHTENED_GHOST_SPEED = tileSize / 10; // Even slower when frightened
+    private static final int PACMAN_SPEED = tileSize / 4; // Faster than ghosts
+    private enum GhostMode { SCATTER, CHASE }
+    private GhostMode currentMode = GhostMode.SCATTER;
+    private long modeTimer = 0;
+    private long frightenedTimer = 0;
+    private int level = 1;
+
+    // Cherry
+    private Image cherryImage;
+    private Image cherry2Image;
+    private Block cherry;
+    private boolean cherryActive = false;
+    private long cherryTimer = 0;
+    private final int CHERRY_POINTS = 100;
+    private final long CHERRY_DURATION = 10000; // 10 seconds cherry stays visible
+    private final long CHERRY_INTERVAL = 30000; // Cherries appear every 30 seconds
+
+    // Images
+    private Image wallImage;
+    private Image blueGhostImage;
+    private Image orangeGhostImage;
+    private Image pinkGhostImage;
+    private Image redGhostImage;
+    private Image pacmanUpImage;
+    private Image pacmanDownImage;
+    private Image pacmanRightImage;
+    private Image pacmanLeftImage;
+    private Image scaredGhostImage;
+    private Image eyesImage;
+    private Image pacmanWholeImage;
+
+    // Pacman animation
+    private boolean pacmanMouthOpen = true;
+    private long pacmanAnimationTimer = 0;
+    private final long PACMAN_ANIMATION_INTERVAL = 200; // 200ms between mouth open/close       
+
+    //Entity or Environment List
+    HashSet<Block> walls;
+    HashSet<Block> foods;
+    HashSet<Block> ghosts;
+    HashSet<Block> powerPellets;
+
+    //Pacman
+    Block pacman;
+    Timer gameLoop;
+    char[] directions = {'U', 'D', 'R', 'L'}; // up down right left
+    Random random = new Random();
+    int score = 0;
+    int lives = 3;
+    boolean gameOver = false;
+    char bufferedDirection = 'R'; // Store the last direction key pressed
+
+    // Scared ghost mechanic
+    private boolean ghostsScared = false;
+    private long scaredEndTime = 0;
+    private final int SCARED_DURATION = 6000; // milliseconds
+
+    // Game start delay
+    private boolean gameStarted = false;
+    private long gameStartTimer = 0;
+    private static final long GAME_START_DELAY = 2000; // 2 seconds delay
+
+    // Game state
+    public int gameState;
+    public final int playState = 1;
+    public final int pauseState = 2;
+
+    // X = wall, O = skip, P = pac man, ' ' = food
+    // Ghosts: b = blue, o = orange, p = pink, r = red
+    private String[] tileMap = {
+            "XXXXXXXXXXXXXXXXXXX",
+            "X        X        X",
+            "X XX XXX X XXX XX X",
+            "X                 X",
+            "X XX X XXXXX X XX X",
+            "X    X       X    X",
+            "XXXX XXXX XXXX XXXX",
+            "OOOX X       X XOOO",
+            "XXXX X XXrXX X XXXX",
+            "O      ObpoO      O",
+            "XXXX X XXOXX X XXXX",
+            "OOOX X       X XOOO",
+            "XXXX X XXXXX X XXXX",
+            "X        X        X",
+            "X XX XXX X XXX XX X",
+            "X  X     P     X  X",
+            "XX X X XXXXX X X XX",
+            "X    X   X   X    X",
+            "X XXXXXX X XXXXXX X",
+            "X                 X",
+            "XXXXXXXXXXXXXXXXXXX"
+    };
+
+    public Pacman() {
+        setPreferredSize(new Dimension(boardWidth, boardHeight));
+        setBackground(Color.BLACK);
+        addKeyListener(this);
+        setFocusable(true);
+
+        // Load images
+        wallImage = new ImageIcon(getClass().getResource("/Resources/wall.png")).getImage();
+        blueGhostImage = new ImageIcon(getClass().getResource("/Resources/blueGhost.png")).getImage();
+        orangeGhostImage = new ImageIcon(getClass().getResource("/Resources/orangeGhost.png")).getImage();
+        redGhostImage = new ImageIcon(getClass().getResource("/Resources/redGhost.png")).getImage();
+        pinkGhostImage = new ImageIcon(getClass().getResource("/Resources/pinkGhost.png")).getImage();
+        pacmanUpImage = new ImageIcon(getClass().getResource("/Resources/pacmanUp.png")).getImage();
+        pacmanRightImage = new ImageIcon(getClass().getResource("/Resources/pacmanRight.png")).getImage();
+        pacmanDownImage = new ImageIcon(getClass().getResource("/Resources/pacmanDown.png")).getImage();
+        pacmanLeftImage = new ImageIcon(getClass().getResource("/Resources/pacmanLeft.png")).getImage();
+        pacmanWholeImage = new ImageIcon(getClass().getResource("/Resources/pacmanWhole.png")).getImage();
+        eyesImage = new ImageIcon(getClass().getResource("/Resources/ghostEye.png")).getImage();     
+        scaredGhostImage = new ImageIcon(getClass().getResource("/Resources/scaredGhost.png")).getImage();cherryImage = new ImageIcon(getClass().getResource("/Resources/cherry.png")).getImage();
+        cherry2Image = new ImageIcon(getClass().getResource("/Resources/cherry2.png")).getImage();
+    
+        // Start cherry timer
+        cherryTimer = System.currentTimeMillis() + CHERRY_INTERVAL;
+        pacman = new Block(pacmanWholeImage, 0, 0, tileSize, tileSize);
+        loadMap();
+        for (Block ghost : ghosts) {
+        for (char dir : directions) {
+            ghost.updateDirection(dir);
+            ghost.updateVelocity();
+            ghost.x += ghost.velocityX;
+            ghost.y += ghost.velocityY;
+
+            boolean valid = true;
+            for (Block wall : walls) {
+                if (collision(ghost, wall)) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            // Reset position
+            ghost.x -= ghost.velocityX;
+            ghost.y -= ghost.velocityY;
+
+            if (valid) {
+                ghost.updateDirection(dir);
+                break;
+            }
+        }
+    }
+        
+        gameStartTimer = System.currentTimeMillis() + GAME_START_DELAY;
+        gameLoop = new Timer(40, this); // 25fps (1000/40)
+        gameLoop.start();
+        gameState = playState;
+    }
+
+    public void loadMap() {
+        walls = new HashSet<>();
+        foods = new HashSet<>();
+        ghosts = new HashSet<>();
+        powerPellets = new HashSet<>();
+
+        for (int r = 0; r < rowCount; r++) {
+            for (int c = 0; c < columnCount; c++) {
+                String row = tileMap[r];
+                char tileMapChar = row.charAt(c);
+
+                int x = c * tileSize + (tileSize - tileSize) / 2; // stays the same
+                int y = r * tileSize + (tileSize - tileSize) / 2; // stays the same
+
+                switch (tileMapChar) {
+                    case 'X': // WALLS
+                        Block wall = new Block(wallImage, x, y, tileSize, tileSize);
+                        walls.add(wall);
+                        break;
+                        case 'b': // BLUE GHOST
+                        Block blueGhost = new Block(blueGhostImage, x, y, tileSize, tileSize);
+                        blueGhost.personality = INKY;
+                        blueGhost.state = GhostState.HOUSE;
+                        blueGhost.stateTimer = System.currentTimeMillis() + 2000;
+                        ghosts.add(blueGhost);
+                        break;
+                    case 'r': // RED GHOST
+                        Block redGhost = new Block(redGhostImage, x, y, tileSize, tileSize);
+                        redGhost.personality = BLINKY;
+                        redGhost.state = GhostState.HOUSE;
+                        redGhost.stateTimer = System.currentTimeMillis() + 1000;
+                        ghosts.add(redGhost);
+                        break;
+                    case 'p': // PINK GHOST
+                        Block pinkGhost = new Block(pinkGhostImage, x, y, tileSize, tileSize);
+                        pinkGhost.personality = PINKY;
+                        pinkGhost.state = GhostState.HOUSE;
+                        pinkGhost.stateTimer = System.currentTimeMillis() + 1500;
+                        ghosts.add(pinkGhost);
+                        break;
+                    case 'o': // ORANGE GHOST
+                        Block orangeGhost = new Block(orangeGhostImage, x, y, tileSize, tileSize);
+                        orangeGhost.personality = CLYDE;
+                        orangeGhost.state = GhostState.HOUSE;
+                        orangeGhost.stateTimer = System.currentTimeMillis() + 2500;
+                        ghosts.add(orangeGhost);
+                        break;
+                    case 'P': // PACMAN
+                            pacman.x = x;
+                            pacman.y = y;
+                            pacman.startX = x;  // Explicitly set startX
+                            pacman.startY = y;  // Explicitly set startY
+                            //pacman.direction = 'R'; // Set default direction
+                            break;
+                    case ' ': // FOOD
+                        Block food = new Block(null, x + 14, y + 14, 4, 4);
+                        foods.add(food);
+                        break;
+                    case 'O': // INSIDE WALLS (SKIP)
+                        break;
+                }
+            }
+        }
+
+        // After loading all ghosts:
+        for (Block ghost : ghosts) {
+            // Ensure proper personality assignment
+            if (ghost.personality < BLINKY || ghost.personality > CLYDE) {
+                ghost.personality = BLINKY;
+            }
+            
+            // Properly position ghosts within their grid cells
+                ghost.x = (ghost.x / tileSize) * tileSize; // Align to grid
+                ghost.y = (ghost.y / tileSize) * tileSize;
+
+            // Set appropriate starting directions based on personality
+            switch (ghost.personality) {
+                case BLINKY: ghost.direction = 'L'; break;
+                case PINKY: ghost.direction = 'U'; break;
+                case INKY: ghost.direction = 'R'; break;
+                case CLYDE: ghost.direction = 'D'; break;
+            }
+    
+            // Initialize velocities
+            ghost.updateVelocity();
+        }   
+
+        // Add power pellets in the 4 corners
+        int pelletSize = 12;
+        int offset = (tileSize - pelletSize) / 2;
+        int[][] pelletPositions = {
+                {1, 1},
+                {1, columnCount - 2},
+                {rowCount - 2, 1},
+                {rowCount - 2, columnCount - 2}
+        };
+        for (int[] pos : pelletPositions) {
+            int y = pos[0] * tileSize + offset;
+            int x = pos[1] * tileSize + offset;
+            powerPellets.add(new Block(null, x, y, pelletSize, pelletSize));
+        }
+    }
+    private enum GhostState {
+        NORMAL, FRIGHTENED, EYES, HOUSE
+    }
+
+    private Image getGhostImage(Block ghost) {
+        if (ghost == null) return blueGhostImage;
+        if (ghost.state == GhostState.FRIGHTENED) return scaredGhostImage;
+        if (ghost.state == GhostState.EYES) return eyesImage; 
+        
+        switch (ghost.personality) {
+            case BLINKY: return redGhostImage;
+            case PINKY: return pinkGhostImage;
+            case INKY: return blueGhostImage;
+            case CLYDE: return orangeGhostImage;
+            default: return blueGhostImage;
+        }
+    }
+
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        draw(g);
+    }
+
+    private void animatePacman() {
+        long currentTime = System.currentTimeMillis();
+        
+        if (currentTime >= pacmanAnimationTimer) {
+            // Check if Pac-Man is actually moving
+            if (Math.abs(pacman.velocityX) > 0 || Math.abs(pacman.velocityY) > 0) {
+                pacmanMouthOpen = !pacmanMouthOpen;
+                
+                if (pacmanMouthOpen) {
+                    // Use directional images when mouth is open
+                    switch (pacman.direction) {
+                        case 'U': pacman.image = pacmanUpImage; break;
+                        case 'D': pacman.image = pacmanDownImage; break;
+                        case 'L': pacman.image = pacmanLeftImage; break;
+                        case 'R': pacman.image = pacmanRightImage; break;
+                    }
+                } else {
+                    // Use whole image when mouth is closed
+                    pacman.image = pacmanWholeImage;
+                }
+                
+                // Reset animation timer
+                pacmanAnimationTimer = currentTime + PACMAN_ANIMATION_INTERVAL;
+            } else {
+                // When not moving, use whole Pac-Man image
+                pacman.image = pacmanWholeImage;
+            }
+        }
+    }
+
+    public void draw(Graphics g) {
+        // Modify existing draw method to include pause screen rendering
+        super.paintComponent(g);
+        
+        // Draw all game elements
+        // Draw walls
+        for (Block wall : walls) {
+            g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
+        }
+
+        // Draw foods
+        g.setColor(Color.YELLOW);
+        for (Block food : foods) {
+            g.fillRect(food.x, food.y, food.width, food.height);
+        }
+
+        // Draw power pellets
+        g.setColor(Color.WHITE);
+        for (Block pellet : powerPellets) {
+            g.fillOval(pellet.x, pellet.y, pellet.width, pellet.height);
+        }
+
+        // Draw ghosts
+        for (Block ghost : ghosts) {
+            g.drawImage(getGhostImage(ghost), ghost.x, ghost.y, ghost.width, ghost.height, null);
+        }
+        // Draw Pac-Man
+        g.drawImage(pacman.image, pacman.x, pacman.y, pacman.width, pacman.height, null);
+
+        // Draw score and lives
+        g.setFont(new Font("Arial", Font.PLAIN, 18));
+        if (gameOver) {
+            g.setColor(Color.RED);
+            g.drawString("Game Over: " + score, tileSize / 2, tileSize / 2);
+        } else {
+            g.setColor(Color.WHITE);
+            g.drawString("Lives: " + lives + "  Score: " + score, tileSize / 2, tileSize / 2);
+        }
+        if (cherryActive && cherry != null) {
+            g.drawImage(cherry.image, cherry.x, cherry.y, cherry.width, cherry.height, null);
+        }
+
+        // Draw pause screen if game is paused
+        if (gameState == pauseState) {
+            drawPauseScreen(g);
+        }
+    }
+
+    private void updateCherry() {
+        long currentTime = System.currentTimeMillis();
+        
+        // If cherry is active but time expired, remove it
+        if (cherryActive && currentTime > cherryTimer) {
+            cherryActive = false;
+            cherry = null;
+            // Set next cherry appearance
+            cherryTimer = currentTime + CHERRY_INTERVAL;
+        }
+        
+        // If cherry not active and it's time to spawn one
+        else if (!cherryActive && currentTime > cherryTimer) {
+            spawnCherry();
+            // Set despawn timer
+            cherryTimer = currentTime + CHERRY_DURATION;
+        }
+    }
+
+    private void spawnCherry() {
+        List<Point> validPositions = new ArrayList<>();
+        
+        for (int r = 1; r < rowCount - 1; r++) {
+            for (int c = 1; c < columnCount - 1; c++) {
+                int x = c * tileSize;
+                int y = r * tileSize;
+                
+                // Check if position is valid
+                boolean valid = true;
+                
+                // Skip 'O' positions in tilemap
+                if (r < tileMap.length && c < tileMap[r].length() && tileMap[r].charAt(c) == 'O') {
+                    valid = false;
+                    continue;
+                }
+                
+                // Create a temporary block to check collisions
+                Block temp = new Block(null, x, y, tileSize, tileSize);
+                
+                // Check walls
+                for (Block wall : walls) {
+                    if (collision(temp, wall)) {
+                        valid = false;
+                        break;
+                    }
+                }
+                
+                // Skip if in ghost house area
+                if (x > boardWidth/2 - tileSize*2 && x < boardWidth/2 + tileSize*2 &&
+                    y > tileSize*7 && y < tileSize*11) {
+                    valid = false;
+                }
+                
+                if (valid) {
+                    validPositions.add(new Point(x, y));
+                }
+            }
+        }
+        
+        // If we found valid positions, pick one randomly
+        if (!validPositions.isEmpty()) {
+            Point pos = validPositions.get(random.nextInt(validPositions.size()));
+            cherry = new Block(cherryImage, pos.x, pos.y, tileSize, tileSize);
+            cherryActive = true;
+        }
+    }
+
+    private void checkCherryCollision() {
+        if (cherryActive && cherry != null && collision(pacman, cherry)) {
+            score += CHERRY_POINTS;
+            cherryActive = false;
+            cherry = null;
+            cherryTimer = System.currentTimeMillis() + CHERRY_INTERVAL;
+        }
+    }
+
+    private void animateCherry() {
+        if (cherryActive && cherry != null) {
+            // Switch between cherry images every 500ms for animation
+            if ((System.currentTimeMillis() / 500) % 2 == 0) {
+                cherry.image = cherryImage;
+            } else {
+                cherry.image = cherry2Image;
+            }
+        }
+    }
+
+    // Ghost behavior timing patterns (in milliseconds)
+    private final int[][] MODE_SEQUENCE = {
+        {7000, 20000},  // Level 1: 7s scatter, 20s chase
+        {7000, 20000},  // Level 2
+        {5000, 20000},  // Level 3
+        {5000, 20000}   // Level 4+ (repeats last pattern)
+    };
+
+    // Ghost target positions for scatter mode (corners)
+    private final Point[] SCATTER_TARGETS = {
+        new Point(0, 0),                    // Red ghost - top left
+        new Point(boardWidth, 0),           // Pink ghost - top right
+        new Point(0, boardHeight),          // Blue ghost - bottom left
+        new Point(boardWidth, boardHeight)  // Orange ghost - bottom right
+    };
+
+    private void handleGhostStates() {
+        long currentTime = System.currentTimeMillis();
+        
+        for (Block ghost : ghosts) {
+            switch (ghost.state) {
+                case FRIGHTENED:
+                    if (currentTime > ghost.stateTimer) {
+                        ghost.state = GhostState.NORMAL;
+                        ghost.image = getGhostImage(ghost);
+                    }
+                    break;
+                    
+                case EYES:
+                    if (currentTime > ghost.stateTimer) {
+                        // Directly teleport to house when timer expires
+                        Point houseTarget = getGhostHouseTarget();
+                        ghost.state = GhostState.HOUSE;
+                        ghost.stateTimer = currentTime + 1000; // 1 second in house
+                        ghost.image = getGhostImage(ghost);
+                        ghost.x = houseTarget.x;
+                        ghost.y = houseTarget.y;
+                    }
+                    break;
+                    
+                case HOUSE:
+                    if (currentTime > ghost.stateTimer) {
+                        ghost.state = GhostState.NORMAL;
+                        ghost.image = getGhostImage(ghost);
+                    }
+                    break;
+
+                case NORMAL:
+                    // No specific action needed for NORMAL state
+                    break;
+            }
+        }
+    }
+        
+    private void setGhostsScared() {
+        ghostsScared = true;
+        scaredEndTime = System.currentTimeMillis() + SCARED_DURATION;
+        frightenedTimer = scaredEndTime;
+        // Save current mode and remaining time before switching to frightened
+        previousMode = currentMode;
+        remainingModeTime = Math.max(0, modeTimer - System.currentTimeMillis());
+        
+        for (Block ghost : ghosts) {
+            // Change condition to allow frightening ghosts in HOUSE or NORMAL state
+            if (ghost.state != GhostState.EYES) {
+                ghost.state = GhostState.FRIGHTENED;
+                ghost.stateTimer = scaredEndTime;
+                ghost.image = scaredGhostImage;
+                ghost.updateVelocity();
+                
+                // Existing direction change logic remains the same
+                char oppositeDir = getOppositeDirection(ghost.direction);
+                
+                // Save original position to test move
+                int originalX = ghost.x;
+                int originalY = ghost.y;
+                
+                // Test the opposite direction
+                boolean validReversal = true;
+                
+                // Simulate movement in opposite direction
+                int testX = originalX;
+                int testY = originalY;
+                switch (oppositeDir) {
+                    case 'L': testX -= tileSize / 4; break;
+                    case 'R': testX += tileSize / 4; break;
+                    case 'U': testY -= tileSize / 4; break;
+                    case 'D': testY += tileSize / 4; break;
+                }
+                
+                // Check if new position would collide with wall
+                ghost.x = testX;
+                ghost.y = testY;
+                for (Block wall : walls) {
+                    if (collision(ghost, wall)) {
+                        validReversal = false;
+                        break;
+                    }
+                }
+                
+                // Reset position
+                ghost.x = originalX;
+                ghost.y = originalY;
+                
+                // Apply direction change if valid, otherwise find another valid direction
+                if (validReversal) {
+                    ghost.updateDirection(oppositeDir);
+                } else {
+                    // Find a valid direction (existing logic remains the same)
+                    List<Character> validDirs = new ArrayList<>();
+                    for (char dir : directions) {
+                        testX = originalX;
+                        testY = originalY;
+                        switch (dir) {
+                            case 'L': testX -= tileSize / 4; break;
+                            case 'R': testX += tileSize / 4; break;
+                            case 'U': testY -= tileSize / 4; break;
+                            case 'D': testY += tileSize / 4; break;
+                        }
+                        
+                        ghost.x = testX;
+                        ghost.y = testY;
+                        boolean valid = true;
+                        for (Block wall : walls) {
+                            if (collision(ghost, wall)) {
+                                valid = false;
+                                break;
+                            }
+                        }
+                        ghost.x = originalX;
+                        ghost.y = originalY;
+                        
+                        if (valid) validDirs.add(dir);
+                    }
+                    
+                    if (!validDirs.isEmpty()) {
+                        ghost.updateDirection(validDirs.get(random.nextInt(validDirs.size())));
+                    }
+                    // If no valid direction, ghost will keep current direction
+                }
+            }
+        }
+    }
+
+    private void unsetGhostsScared() {
+        ghostsScared = false;
+        long currentTime = System.currentTimeMillis();
+        frightenedTimer = currentTime + 1000; // Set vulnerable period
+        for (Block ghost : ghosts) {
+            if (ghost.state == GhostState.FRIGHTENED) {
+                ghost.state = GhostState.NORMAL;
+                ghost.image = getGhostImage(ghost);
+                // Brief vulnerable period
+                ghost.stateTimer = frightenedTimer;
+            }
+        }
+    }
+    private GhostMode previousMode = GhostMode.SCATTER;
+    private long remainingModeTime = 0;
+
+    private void updateGhostModes() {
+        long currentTime = System.currentTimeMillis();
+        
+        if (ghostsScared) {
+            if (currentTime > frightenedTimer) {
+                unsetGhostsScared();
+                // Restore previous mode with remaining time
+                currentMode = previousMode;
+                modeTimer = currentTime + remainingModeTime;
+            }
+            return;
+        }
+
+        if (currentTime > modeTimer) {
+            // Switch between scatter and chase modes
+            currentMode = (currentMode == GhostMode.SCATTER) ? GhostMode.CHASE : GhostMode.SCATTER;
+            modeTimer = currentTime + getCurrentModeDuration();
+        }
+    }
+
+    private int getCurrentModeDuration() {
+        int levelIndex = Math.min(level - 1, MODE_SEQUENCE.length - 1);
+        return MODE_SEQUENCE[levelIndex][currentMode == GhostMode.SCATTER ? 0 : 1];
+    }
+
+    private Point getGhostHouseTarget() {
+        return new Point((columnCount / 2) * tileSize, 9 * tileSize); // row 9 = center line of house
+    }
+
+    private void moveGhosts() {
+        long currentTime = System.currentTimeMillis();
+        
+        for (Block ghost : ghosts) {
+            // Skip movement for EYES state (they remain stationary)
+            if (ghost.state == GhostState.EYES) {
+                continue;
+            }
+            
+            // Skip if ghost is in house and timer not expired
+            if ((ghost.state == GhostState.HOUSE) && currentTime < ghost.stateTimer) {
+                continue;
+            }
+
+            // Handle state transitions
+            if (ghost.state == GhostState.HOUSE && currentTime >= ghost.stateTimer) {
+                // After house timer expires, revert to normal state
+                ghost.state = GhostState.NORMAL;
+                ghost.image = getGhostImage(ghost); // Update image
+                
+                // Help ghost leave the house by setting an initial direction
+                ghost.updateDirection('U');
+                
+                // Make sure they have a valid position outside the house walls
+                Point houseExit = new Point(boardWidth/2, tileSize * 8);
+                ghost.x = houseExit.x;
+                ghost.y = houseExit.y;
+                ghost.updateVelocity(); // Force velocity refresh for new state+direction 
+            }
+
+            // Determine target based on state
+            Point target;
+            if (ghostsScared && ghost.state == GhostState.FRIGHTENED) {
+                // Use improved random movement for frightened ghosts
+                moveGhostRandomly(ghost);
+                continue;
+            }
+            else {
+                target = calculateGhostTarget(ghost);
+            }
+
+            // Move ghost toward target
+            moveGhostToTarget(ghost, target);
+            
+            // Apply tunnel warping at the end
+            handleTunnelWarping(ghost);
+        }
+    }
+    
+       private boolean isInTunnel(Block entity) {
+        // Check if entity is in the tunnel row (y coordinate)
+        boolean inTunnelRow = entity.y >= (tileSize * 9) - 4 && entity.y <= (tileSize * 9) + 4;
+        
+        // Only consider it a tunnel if also near the edges of the screen
+        return inTunnelRow && (entity.x < tileSize * 2 || entity.x > boardWidth - (tileSize * 2));
+    }
+
+    private void handleTunnelWarping(Block entity) {
+        // Apply warping for all entities consistently
+        if (isInTunnel(entity)) {
+            if (entity.x < -tileSize) {
+                // Warp from left to right
+                entity.x = boardWidth;
+            } else if (entity.x > boardWidth) {
+                // Warp from right to left
+                entity.x = -tileSize;
+            }
+        }
+    }
+
+    private void moveGhostToTarget(Block ghost, Point target) {
+        int originalX = ghost.x;
+        int originalY = ghost.y;
+        
+        // Remove special handling for EYES state
+
+        // Try to align ghost to grid before changing direction
+        boolean isAtIntersection = false;
+        
+        // Only align at intersections or when changing direction
+        if (countValidDirections(ghost) > 2) {
+            alignGhostToGrid(ghost);
+            isAtIntersection = true;
+        }
+        
+        // Check if ghost is in tunnel
+        boolean inTunnel = isInTunnel(ghost);
+        
+        List<Character> possibleDirections = new ArrayList<>();
+        char oppositeDir = getOppositeDirection(ghost.direction);
+        
+        for (char dir : directions) {
+            // Prevent vertical movement in the tunnel areas only
+            if (inTunnel && (dir == 'U' || dir == 'D')) {
+                continue;
+            }
+            
+            // Don't allow reversal direction unless it's the only option
+            if (dir == oppositeDir) continue;
+            
+            // Test movement
+            ghost.x = originalX;
+            ghost.y = originalY;
+            
+            // Move in smaller increments for better collision detection
+            int steps = 4; // Break movement into 4 steps
+            int dx = 0, dy = 0;
+            
+            switch (dir) {
+                case 'L': dx = -tileSize / 4; break;
+                case 'R': dx = tileSize / 4; break;
+                case 'U': dy = -tileSize / 4; break;
+                case 'D': dy = tileSize / 4; break;
+            }
+            
+            // Check movement validity
+            boolean validMove = true;
+            for (int i = 1; i <= steps; i++) {
+                ghost.x = originalX + (dx * i / steps);
+                ghost.y = originalY + (dy * i / steps);
+                
+                for (Block wall : walls) {
+                    if (collision(ghost, wall)) {
+                        validMove = false;
+                        break;
+                    }
+                }
+                if (!validMove) break;
+            }
+            
+            // Reset position
+            ghost.x = originalX;
+            ghost.y = originalY;
+            
+            if (validMove) {
+                possibleDirections.add(dir);
+            }
+        }
+        
+        // Choose direction (if available)
+        if (!possibleDirections.isEmpty()) {
+            // Stick to previous direction unless forced to change
+            boolean needsNewDirection = isAtIntersection || !possibleDirections.contains(ghost.direction);
+
+            if (needsNewDirection) {
+                if (ghost.state == GhostState.FRIGHTENED) {
+                    ghost.updateDirection(possibleDirections.get(random.nextInt(possibleDirections.size())));
+                } else {
+                    char newDir = getBestDirection(ghost, possibleDirections, target);
+                    ghost.updateDirection(newDir);
+                }
+            }
+        }
+        
+        // Always enforce velocity to match state, even if direction hasn't changed
+        ghost.updateVelocity();
+
+        // Move ghost in current direction
+        ghost.x += ghost.velocityX;
+        ghost.y += ghost.velocityY;
+        
+        // Handle tunnel warping for ghosts
+        handleTunnelWarping(ghost);
+    }
+
+    private char getBestDirection(Block ghost, List<Character> possibleDirections, Point target) {
+        char currentDir = ghost.direction;
+        char oppositeDir = getOppositeDirection(currentDir);
+        char bestDir = currentDir;
+        double minDistance = Double.MAX_VALUE;
+
+        for (char dir : possibleDirections) {
+            // Avoid reversing unless it's the *only* valid move
+            if (dir == oppositeDir && possibleDirections.size() > 1) continue;
+
+            int newX = ghost.x;
+            int newY = ghost.y;
+
+            switch (dir) {
+                case 'L': newX -= tileSize; break;
+                case 'R': newX += tileSize; break;
+                case 'U': newY -= tileSize; break;
+                case 'D': newY += tileSize; break;
+            }
+
+            double distance = Math.hypot(newX - target.x, newY - target.y);
+            if (distance < minDistance) {
+                minDistance = distance;
+                bestDir = dir;
+            }
+        }
+
+        return bestDir;
+    }
+    
+    private void alignGhostToGrid(Block ghost) {
+        // Align to nearest grid position
+        int gridX = Math.round((float)ghost.x / tileSize) * tileSize;
+        int gridY = Math.round((float)ghost.y / tileSize) * tileSize;
+        
+        // Only align if we're close enough to avoid teleporting
+        if (Math.abs(ghost.x - gridX) < tileSize/4) {
+            ghost.x = gridX;
+        }
+        if (Math.abs(ghost.y - gridY) < tileSize/4) {
+            ghost.y = gridY;
+        }
+    }
+    
+    private int countValidDirections(Block ghost) {
+        int count = 0;
+        int originalX = ghost.x;
+        int originalY = ghost.y;
+        
+        for (char dir : directions) {
+            // Test movement
+            int newX = originalX;
+            int newY = originalY;
+            
+            switch (dir) {
+                case 'L': newX -= tileSize / 4; break;
+                case 'R': newX += tileSize / 4; break;
+                case 'U': newY -= tileSize / 4; break;
+                case 'D': newY += tileSize / 4; break;
+            }
+            
+            ghost.x = newX;
+            ghost.y = newY;
+            
+            boolean validMove = true;
+            for (Block wall : walls) {
+                if (collision(ghost, wall)) {
+                    validMove = false;
+                    break;
+                }
+            }
+            
+            if (validMove) count++;
+        }
+        
+        // Reset position
+        ghost.x = originalX;
+        ghost.y = originalY;
+        
+        return count;
+    }
+    
+    private char getOppositeDirection(char direction) {
+        switch (direction) {
+            case 'L': return 'R';
+            case 'R': return 'L';
+            case 'U': return 'D';
+            case 'D': return 'U';
+            default: return 'U'; // Default
+        }
+    }
+    
+    private void moveGhostRandomly(Block ghost) {
+        // Get current and opposite directions
+        char currentDir = ghost.direction;
+        char oppositeDir = getOppositeDirection(currentDir);
+        
+        // Check if ghost is in tunnel
+        boolean inTunnel = isInTunnel(ghost);
+        
+        // Get valid directions (excluding opposite)
+        List<Character> validDirs = new ArrayList<>();
+        int originalX = ghost.x;
+        int originalY = ghost.y;
+        
+        // The key issue - Check if we can continue in current direction
+        boolean canContinue = false;
+        
+        for (char dir : directions) {
+            if (dir == oppositeDir) continue; // Don't allow 180-degree turns
+            
+            // Prevent vertical movement only in tunnel areas, not the entire row
+            if (inTunnel && (dir == 'U' || dir == 'D')) {
+                continue;
+            }
+            
+            // Test movement
+            int newX = originalX;
+            int newY = originalY;
+            
+            switch (dir) {
+                case 'L': newX -= tileSize / 4; break;
+                case 'R': newX += tileSize / 4; break;
+                case 'U': newY -= tileSize / 4; break;
+                case 'D': newY += tileSize / 4; break;
+            }
+            
+            ghost.x = newX;
+            ghost.y = newY;
+            
+            boolean validMove = true;
+            for (Block wall : walls) {
+                if (collision(ghost, wall)) {
+                    validMove = false;
+                    break;
+                }
+            }
+            
+            // Reset position
+            ghost.x = originalX;
+            ghost.y = originalY;
+            
+            if (validMove) {
+                validDirs.add(dir);
+                if (dir == currentDir) {
+                    canContinue = true;
+                }
+            }
+        }
+        
+        // Choose direction:
+        if (!validDirs.isEmpty()) {
+            // If we can't continue in current direction, we must change
+            if (!canContinue) {
+                int randomIndex = random.nextInt(validDirs.size());
+                ghost.updateDirection(validDirs.get(randomIndex));
+            } 
+            // If at intersection (multiple options), randomly decide whether to turn
+            else if (validDirs.size() > 1 && random.nextInt(3) == 0) {
+                // Remove current direction to force a turn at intersection
+                List<Character> turnOptions = new ArrayList<>(validDirs);
+                turnOptions.remove(Character.valueOf(currentDir));
+                
+                if (!turnOptions.isEmpty()) {
+                    int randomIndex = random.nextInt(turnOptions.size());
+                    ghost.updateDirection(turnOptions.get(randomIndex));
+                } else {
+                    // Keep going same direction if somehow we have no other options
+                    ghost.updateDirection(currentDir);
+                }
+            } else {
+                // Continue in same direction
+                ghost.updateDirection(currentDir);
+            }
+        }
+        
+        // Ensure the ghost moves by applying velocity
+        ghost.x += ghost.velocityX;
+        ghost.y += ghost.velocityY;
+        
+        // Make sure to apply tunnel warping for frightened ghosts too
+        handleTunnelWarping(ghost);
+    }
+    private Point calculateGhostTarget(Block ghost) {
+        Point target = new Point();
+        
+        if (ghost.state == GhostState.NORMAL) {
+            if (System.currentTimeMillis() < gameStartTimer + 10000) { // First 10 seconds
+                // Move randomly instead of chasing
+                target.x = ghost.x + random.nextInt(3 * tileSize) - tileSize;
+                target.y = ghost.y + random.nextInt(3 * tileSize) - tileSize;
+                return target;
+            }
+            if (currentMode == GhostMode.SCATTER) {
+                target.x = SCATTER_TARGETS[ghost.personality].x;
+                target.y = SCATTER_TARGETS[ghost.personality].y;
+            } else {
+                // Chase mode logic (unchanged)
+                switch (ghost.personality) {
+                    case BLINKY: 
+                        target.x = pacman.x;
+                        target.y = pacman.y;
+                        break;
+                        
+                    case PINKY:
+                        target.x = pacman.x;
+                        target.y = pacman.y;
+                        
+                        switch (pacman.direction) {
+                            case 'U': target.y -= 4 * tileSize; break;
+                            case 'D': target.y += 4 * tileSize; break;
+                            case 'L': target.x -= 4 * tileSize; break;
+                            case 'R': target.x += 4 * tileSize; break;
+                        }
+                        break;
+                        
+                    case INKY:
+                        Block blinky = null;
+                        for (Block g : ghosts) {
+                            if (g.personality == BLINKY) {
+                                blinky = g;
+                                break;
+                            }
+                        }
+                        
+                        target.x = pacman.x;
+                        target.y = pacman.y;
+                        
+                        switch (pacman.direction) {
+                            case 'U': target.y -= 2 * tileSize; break;
+                            case 'D': target.y += 2 * tileSize; break;
+                            case 'L': target.x -= 2 * tileSize; break;
+                            case 'R': target.x += 2 * tileSize; break;
+                        }
+                        
+                        if (blinky != null) {
+                            int vectorX = target.x - blinky.x;
+                            int vectorY = target.y - blinky.y;
+                            
+                            target.x = blinky.x + (vectorX * 2);
+                            target.y = blinky.y + (vectorY * 2);
+                        }
+                        break;
+                        
+                    case CLYDE:
+                        double distance = Math.sqrt(Math.pow(ghost.x - pacman.x, 2) + Math.pow(ghost.y - pacman.y, 2));
+                        
+                        if (distance > 8 * tileSize) {
+                            target.x = pacman.x;
+                            target.y = pacman.y;
+                        } else {
+                            target.x = SCATTER_TARGETS[CLYDE].x;
+                            target.y = SCATTER_TARGETS[CLYDE].y;
+                        }
+                        break;
+                }
+            }
+        } else if (ghost.state == GhostState.FRIGHTENED) {
+            // Random movement handled separately
+            target.x = ghost.x;
+            target.y = ghost.y;
+        }
+        
+        return target;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        long currentTime = System.currentTimeMillis();
+        
+        // Only update game logic if not paused
+        if (gameState == playState) {
+            // Check if game start delay is active
+            if (!gameStarted && currentTime >= gameStartTimer) {
+                gameStarted = true;
+            }
+            
+            if (!gameOver && gameStarted) {
+                // Existing game logic remains the same
+                handleBufferedDirection();
+                updateCherry();
+                animateCherry();
+                checkCherryCollision();
+                updatePacmanDirection();
+                updateGhostModes();
+                handleGhostStates();
+                moveGhosts();
+                checkFoodCollisions();
+                checkPowerPelletCollisions();
+                checkGhostCollisions();
+                checkGameConditions();
+                animatePacman();
+            }
+        }
+        
+        repaint();
+    }
+    
+    // Replace the handleBufferedDirection method with this improved version
+    private void handleBufferedDirection() {
+        if (bufferedDirection != pacman.direction) {
+            // Save original position and direction
+            int originalX = pacman.x;
+            int originalY = pacman.y;
+            char originalDirection = pacman.direction;
+            
+            // Try to move in buffered direction
+            pacman.direction = bufferedDirection;
+            pacman.updateVelocity();
+            pacman.x += pacman.velocityX;
+            pacman.y += pacman.velocityY;
+            
+            // Check if new position collides with wall
+            boolean collision = false;
+            for (Block wall : walls) {
+                if (collision(pacman, wall)) {
+                    collision = true;
+                    break;
+                }
+            }
+            
+            // If collision occurred, revert to original position and direction
+            if (collision) {
+                pacman.x = originalX;
+                pacman.y = originalY;
+                pacman.direction = originalDirection;
+                pacman.updateVelocity();
+                // Don't reset the bufferedDirection - keep it for later when turn is possible
+            }
+            // If no collision, the direction change was successful, so clear buffer
+            else {
+                // Direction change was successful, no need to keep buffer
+                // The upcoming updatePacmanDirection will move Pacman again, 
+                // so we need to revert the position but keep the new direction
+                pacman.x = originalX;
+                pacman.y = originalY;
+            }
+        }
+    }
+    
+    private void updatePacmanDirection() {
+        // Determine which directional image to use based on current movement
+        switch (pacman.direction) {
+            case 'U': pacman.image = pacmanUpImage; break;
+            case 'D': pacman.image = pacmanDownImage; break;
+            case 'L': pacman.image = pacmanLeftImage; break;
+            case 'R': pacman.image = pacmanRightImage; break;
+        }
+        
+        // Update pacman position
+        pacman.x += pacman.velocityX;
+        pacman.y += pacman.velocityY;
+        
+        // Check for tunnel warping
+        handleTunnelWarping(pacman);
+        
+        // Check for wall collisions
+        boolean collision = false;
+        for (Block wall : walls) {
+            if (collision(pacman, wall)) {
+                // Undo movement
+                pacman.x -= pacman.velocityX;
+                pacman.y -= pacman.velocityY;
+                collision = true;
+                break;
+            }
+        }
+        
+        // If we didn't have a collision and successfully moved, 
+        // and our buffered direction matches our current direction,
+        // we can clear the buffer
+        if (!collision && pacman.direction == bufferedDirection) {
+            // We've successfully changed to the buffered direction, so clear it
+            bufferedDirection = pacman.direction;
+        }
+    }
+    
+    private void checkGameConditions() {
+        // Check if all food is eaten
+        if (foods.isEmpty() && powerPellets.isEmpty()) {
+            level++;
+            resetForNextLevel(); // Reset for the next level without resetting score and lives
+
+            // Increase difficulty with level
+            if (level > 4) {
+                // Decrease ghost scatter time after level 4
+                MODE_SEQUENCE[3][0] = Math.max(3000, MODE_SEQUENCE[3][0] - 1000);
+            }
+        }
+    }
+    
+    private void checkFoodCollisions() {
+        Block foodToRemove = null;
+        for (Block food : foods) {
+            if (collision(pacman, food)) {
+                foodToRemove = food;
+                score += 10;
+                break;
+            }
+        }
+        if (foodToRemove != null) {
+            foods.remove(foodToRemove);
+        }
+    }
+    
+    private void checkPowerPelletCollisions() {
+        Block pelletToRemove = null;
+        for (Block pellet : powerPellets) {
+            if (collision(pacman, pellet)) {
+                pelletToRemove = pellet;
+                score += 50;
+                setGhostsScared();
+                break;
+            }
+        }
+        if (pelletToRemove != null) {
+            powerPellets.remove(pelletToRemove);
+        }
+    }
+    
+    private void checkGhostCollisions() {
+        for (Block ghost : ghosts) {
+            if (collision(pacman, ghost)) {
+                if (ghost.state == GhostState.FRIGHTENED) {
+                    ghost.state = GhostState.EYES;
+                    ghost.stateTimer = System.currentTimeMillis() + 2000; // wait 2 seconds at death spot
+                    ghost.image = eyesImage;
+                    ghost.velocityX = 0;
+                    ghost.velocityY = 0;
+                    score += 200;
+                } else if (ghost.state == GhostState.NORMAL) {
+                    // Lose life
+                    lives--;
+                    if (lives <= 0) {
+                        gameOver = true;
+                    } else {
+                        resetPositions();
+                    }
+                    break;
+                }
+                // Eyes don't collide with pacman
+            }
+        }
+    }
+    
+    private void resetPositions() {
+        // Explicitly reset Pac-Man to his original position
+        pacman.x = pacman.startX;
+        pacman.y = pacman.startY;
+        pacman.direction = 'R';
+        pacman.image = pacmanRightImage;
+
+        gameStarted = false;
+        gameStartTimer = System.currentTimeMillis() + GAME_START_DELAY;
+        
+        for (Block ghost : ghosts) {
+            ghost.reset();
+            ghost.state = GhostState.HOUSE;
+            ghost.stateTimer = System.currentTimeMillis() + 2000 + (1000 * ghost.personality);
+        }
+        
+        // Reset mode timing
+        modeTimer = System.currentTimeMillis() + MODE_SEQUENCE[Math.min(level - 1, MODE_SEQUENCE.length - 1)][0];
+        currentMode = GhostMode.SCATTER;
+        ghostsScared = false;
+    }
+    
+    private void resetGame() {
+        loadMap();
+        score = 0;
+        lives = 3;
+        gameOver = false;
+        ghostsScared = false;
+        gameStarted = false;
+        gameStartTimer = System.currentTimeMillis() + GAME_START_DELAY;
+        modeTimer = System.currentTimeMillis() + MODE_SEQUENCE[0][0];
+        currentMode = GhostMode.SCATTER;
+        ghostsScared = false;
+        cherryActive = false;
+        cherry = null;
+        cherryTimer = System.currentTimeMillis() + CHERRY_INTERVAL;
+    }
+    
+    private void resetForNextLevel() {
+        loadMap();
+        ghostsScared = false;
+        gameStarted = false;
+        gameStartTimer = System.currentTimeMillis() + GAME_START_DELAY;
+        modeTimer = System.currentTimeMillis() + MODE_SEQUENCE[Math.min(level - 1, MODE_SEQUENCE.length - 1)][0];
+        currentMode = GhostMode.SCATTER;
+        pacman.reset();
+        cherryActive = false;
+        cherry = null;
+        cherryTimer = System.currentTimeMillis() + CHERRY_INTERVAL;
+        for (Block ghost : ghosts) {
+            ghost.reset();
+            ghost.state = GhostState.HOUSE;
+            ghost.stateTimer = System.currentTimeMillis() + 2000 + (1000 * ghost.personality);
+        }
+    }
+    public boolean collision(Block a, Block b) {
+        int aLeft = a.x + a.collisionPadding;
+        int aRight = a.x + a.width - a.collisionPadding;
+        int aTop = a.y + a.collisionPadding;
+        int aBottom = a.y + a.height - a.collisionPadding;
+        
+        int bLeft = b.x;
+        int bRight = b.x + b.width;
+        int bTop = b.y;
+        int bBottom = b.y + b.height;
+        
+        // Check for overlap
+        return !(aLeft > bRight || aRight < bLeft || aTop > bBottom || aBottom < bTop);
+    }
+
+    public void drawPauseScreen(Graphics g) {
+        // Center the pause text on the screen
+        g.setColor(new Color(0, 0, 0, 180)); // Semi-transparent black overlay
+        g.fillRect(0, 0, boardWidth, boardHeight);
+
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 48));
+        String text = "PAUSED";
+        
+        // Get font metrics to center text precisely
+        FontMetrics fm = g.getFontMetrics();
+        int textWidth = fm.stringWidth(text);
+        int textHeight = fm.getHeight();
+        
+        int x = (boardWidth - textWidth) / 2;
+        int y = (boardHeight - textHeight) / 2;
+        
+        g.drawString(text, x, y);
+    }
+    
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (!gameOver) {
+            int key = e.getKeyCode();
+            
+            // Add pause functionality
+            if (key == KeyEvent.VK_P) {
+                // Toggle between play and pause states
+                if (gameState == playState) {
+                    gameState = pauseState;
+                } else if (gameState == pauseState) {
+                    gameState = playState;
+                }
+                return;
+            }
+            
+            // Only process movement keys if in play state
+            if (gameState == playState) {
+                if (key == KeyEvent.VK_UP) {
+                    bufferedDirection = 'U';
+                } else if (key == KeyEvent.VK_DOWN) {
+                    bufferedDirection = 'D';
+                } else if (key == KeyEvent.VK_LEFT) {
+                    bufferedDirection = 'L';
+                } else if (key == KeyEvent.VK_RIGHT) {
+                    bufferedDirection = 'R';
+                }
+            }
+        } else {
+            // Restart game on space if game over
+            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                resetGame();
+            }
+        }
+    }
+    
+    @Override
+    public void keyReleased(KeyEvent e) {
+        // Not used but required by KeyListener interface
+    }
+    
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // Not used but required by KeyListener interface
+    }
+}

@@ -1,5 +1,7 @@
 package main;
 
+import java.awt.Point;
+
 public class PauseState implements GameState{
 	private UI ui;
 	private GamePanel gp;
@@ -14,10 +16,10 @@ public class PauseState implements GameState{
 	}
 
 	@Override
-	public void draw() {
+	public void draw(boolean clickedThisFrame, Point clickPoint) {
 		// TODO Auto-generated method stub
 		ui.drawHUD();
-		ui.drawPauseScreen();
+		ui.drawPauseScreen(clickedThisFrame, clickPoint);
 	}
 	
 	public void pause() {

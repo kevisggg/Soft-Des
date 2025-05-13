@@ -20,7 +20,7 @@ public class Player extends Entity{
 		this.keyH = keyH;
 		name = "Player";
 		collisionBox = new Rectangle(10, 16, 28, 32);
-		lives = 3;
+		lives = 1;
 		speed = 3;
 		invincibleDuration = 180;//3.5 SECONDS
 		blinkInterval = 5;

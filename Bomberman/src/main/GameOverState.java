@@ -1,5 +1,7 @@
 package main;
 
+import java.awt.Point;
+
 public class GameOverState implements GameState{
 	private UI ui;
 	public GameOverState(UI ui) {
@@ -11,10 +13,10 @@ public class GameOverState implements GameState{
 		//gp.stopMusic();
 	}
 	@Override
-	public void draw() {
+	public void draw(boolean clickedThisFrame, Point clickPoint) {
 		// TODO Auto-generated method stub
 		ui.drawHUD();
-		ui.drawGameoverScreen();
+		ui.drawGameoverScreen(clickedThisFrame, clickPoint);
 	}
 	@Override
 	public void pause() {

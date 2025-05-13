@@ -13,14 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Random;
-
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-
 import object.Bomb;
 import object.PowerUp;
 import entity.Enemy;
@@ -58,6 +51,7 @@ public class GamePanel extends JPanel implements Runnable{
 	private CollisionChecker colCheck = new CollisionChecker(this, asset, tileMgr, explosions);
 	private Player player = new Player(this, keyH, colCheck);
 	public UI ui = new UI(this, mouseH, scoreH);
+	
 	private Thread gameThread;
 	
 	public GamePanel() {
@@ -82,6 +76,8 @@ public class GamePanel extends JPanel implements Runnable{
 	public Player getPlayer() {return player;}
 	public GameState getGameState() {return gamestateH.getState();}
 	public PowerUp getObj(int i) {return obj.get(i);}
+	public String getNameInput() {return keyH.getName();}
+	public boolean getNameEntered() {return keyH.getNameEntered();}
 	public String getLvl() {
 		String lvl;
 		lvl = String.valueOf(level);
@@ -102,7 +98,7 @@ public class GamePanel extends JPanel implements Runnable{
 	public void setPauseState() {gamestateH.setState(new PauseState(this, ui)); pauseMusic();}
 	public void setOverState() {gamestateH.setState(new GameOverState(ui)); stopMusic();}
 	public void setWinState() {gamestateH.setState(new WinState(this, ui));}
-	public void setCurPlayerName(String name) {currentPlayer.setName(name);}
+	public void setCurPlayerName(String name) {currentPlayer.setName(name); mouseH.resetClick();}
 	public void setObjXY(int x, int y) {
 		obj.getLast().setX(x);
 		obj.getLast().setY(y);		
@@ -114,6 +110,7 @@ public class GamePanel extends JPanel implements Runnable{
 		asset.setEnemy();
 		playMusic();
 		setInsState();
+		keyH.setNameEntered(false);
 	}
 	
 	
@@ -138,7 +135,10 @@ public class GamePanel extends JPanel implements Runnable{
 		stopMusic();
 		playMusic();
 		scoreH.resetScore();
+		ui.resetToggleLeaderboard();
 	    level = 1;
+	    keyH.setNameEntered(false);
+	    keyH.setName("");
 		newLevel();
 	}
 	
@@ -261,7 +261,7 @@ public class GamePanel extends JPanel implements Runnable{
     }
 	
 	public void saveData() {
-		bml.out();
+		//bml.out();
 		 try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
 	            oos.writeObject(bml);
 	            oos.flush();

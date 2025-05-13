@@ -5,14 +5,33 @@ import java.awt.event.KeyListener;
 public class KeyHandler implements KeyListener{
 	
 	private boolean upPressed, downPressed, leftPressed, rightPressed, spacePressed;
+	private boolean nameEntered;
 	//int up, down, left, right, space;
 	private GamePanel gp;
+	private String name = "";
 	
 	public KeyHandler(GamePanel gp) {
 		this.gp = gp;
 	}
 	@Override
 	public void keyTyped(KeyEvent e) {
+		if(gp.getGameState() instanceof GameOverState) {
+			//System.out.println("GETTING KEY TYPED");
+			System.out.println(name + " - " + nameEntered);
+			char c = e.getKeyChar();
+	          if (Character.isLetterOrDigit(c) && name.length() < 10) {
+	        	 // System.out.println("ADD CHAR");
+	        	  name += Character.toUpperCase(c);
+	          } else if (c == '\b' && name.length() > 0) {
+	        	  //System.out.println("BACK CHAR");
+	              name = name.substring(0, name.length() - 1);
+	          } else if (c == '\n' && name.length() > 0) {
+	        	  gp.setCurPlayerName(name);
+	        	  gp.playSFX(5);
+	              setNameEntered(true);
+	          }
+	          //gp.repaint();
+		}  
 	}
 
 	@Override
@@ -96,6 +115,22 @@ public class KeyHandler implements KeyListener{
 	
 	public boolean getSpace() {
 		return spacePressed;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	public void setNameEntered(boolean nameEntered) {
+		this.nameEntered = nameEntered;
+	}
+	
+	public boolean getNameEntered() {
+		return nameEntered;
 	}
 
 }

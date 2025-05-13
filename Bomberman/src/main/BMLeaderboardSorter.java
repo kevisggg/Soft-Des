@@ -9,6 +9,14 @@ public class BMLeaderboardSorter implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private ArrayList<BMPlayerLeaderboard> players = new ArrayList<>();
 	
+	public BMPlayerLeaderboard getPlayer(int i) {
+		return players.get(i);
+	}
+	
+	public int getPlayersSize() {
+		return players.size();
+	}
+	
 	public void addPlayer(BMPlayerLeaderboard player) {
 		players.add(player);
 	}

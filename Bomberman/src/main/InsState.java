@@ -1,5 +1,7 @@
 package main;
 
+import java.awt.Point;
+
 public class InsState implements GameState{
 	private UI ui;
 	public InsState(UI ui) {
@@ -9,9 +11,9 @@ public class InsState implements GameState{
 	public void update() {}
 
 	@Override
-	public void draw() {
+	public void draw(boolean clickedThisFrame, Point clickPoint) {
 		ui.drawHUD();
-		ui.drawInstruction();
+		ui.drawInstruction(clickedThisFrame, clickPoint);
 	}
 	@Override
 	public void pause() {}

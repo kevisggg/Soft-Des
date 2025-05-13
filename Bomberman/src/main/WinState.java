@@ -1,5 +1,7 @@
 package main;
 
+import java.awt.Point;
+
 public class WinState implements GameState{
 	private GamePanel gp;
 	private UI ui;
@@ -22,10 +24,10 @@ public class WinState implements GameState{
 	}
 
 	@Override
-	public void draw() {
+	public void draw(boolean clickedThisFrame, Point clickPoint) {
 		// TODO Auto-generated method stub
 		ui.drawHUD();
-		ui.drawWinScreen();
+		ui.drawWinScreen(clickedThisFrame, clickPoint);
 	}
 	@Override
 	public void pause() {}

@@ -19,6 +19,7 @@ public class MouseHandler implements MouseListener{
 		if(!(gp.getGameState() instanceof PlayState)) {
 			p = e.getPoint();
 			clicked = true;
+			System.out.println(p);
 		}
 	}
 

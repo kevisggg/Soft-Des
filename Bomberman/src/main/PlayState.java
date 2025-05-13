@@ -1,5 +1,6 @@
 package main;
 
+import java.awt.Point;
 import java.util.ArrayList;
 
 import entity.Enemy;
@@ -34,7 +35,7 @@ public class PlayState implements GameState {
 	}
 	
 	@Override
-	public void draw() {
+	public void draw(boolean clickedThisFrame, Point clickPoint) {
 		ui.drawHUD();
 	}
 	

@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.List;
 
-public class Pacman extends JPanel implements ActionListener, KeyListener {
+public class Pacman extends JPanel implements ActionListener, KeyListener, MouseWheelListener {
     
     class Block {
         int x, y, width, height;
@@ -180,10 +180,10 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
     // Pause Screen
     private Rectangle resumeButtonBounds;
     private Rectangle restartButtonBounds;
-    private Rectangle exitButtonBounds;
+    private Rectangle menuButtonBounds;
     private Rectangle hoveredButton = null;
 
-    // Leaderboard
+    // Leaderboard Screen
     private LeaderboardManager leaderboardManager = new LeaderboardManager();
     public final int leaderboardState = 3;
     private String enteredName = "";
@@ -191,6 +191,21 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
     private Rectangle leaderboardButtonBounds;
     private Rectangle returnButtonBounds;
     private Rectangle backButtonBounds;
+
+    // Leaderboard Scroll
+    private int scrollOffset = 0;
+    private int entryHeight = 30; // height per entry
+    private int visibleEntries = 10;
+    private int maxScrollOffset = 0;
+    private boolean draggingScrollbar = false;
+    private int dragStartY = 0;
+    private int initialScrollOffset = 0;
+
+    // Scrollbar dimensions
+    private int scrollbarX = 430; // adjust this for table edge
+    private int scrollbarWidth = 12;
+    private int scrollbarHeight = 0;
+    private int scrollbarY = 0;
 
     // X = wall, O = skip, P = pac man, ' ' = food
     // Ghosts: b = blue, o = orange, p = pink, r = red
@@ -275,6 +290,11 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
             public void mouseClicked(MouseEvent e) {
                 Point click = e.getPoint();
 
+                if (restartButtonBounds != null && restartButtonBounds.contains(click)) {
+                    resetGame();
+                    repaint();
+                }
+
                 if (gameState == pauseState) {
                     if (resumeButtonBounds != null && resumeButtonBounds.contains(click)) {
                         gameState = playState;
@@ -294,11 +314,34 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
                         gameState = leaderboardState;
                         repaint();
                     } else if (returnButtonBounds != null && returnButtonBounds.contains(click)) {
-                        resetGame();
-                        repaint();
+                        //resetGame();
+                        //repaint();
                     }
                 }
                 else if (gameState == leaderboardState) {
+                    int x = e.getX();
+                    int y = e.getY();
+
+                    // Scrollbar drag
+                    int scrollbarX = boardWidth - 16;
+                    int scrollbarY = tileSize * 5;
+                    int scrollbarHeight = visibleEntries * entryHeight;
+
+                    List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+                    int totalHeight = topPlayers.size() * entryHeight;
+                    int thumbHeight = Math.max((int)((float)scrollbarHeight / totalHeight * scrollbarHeight), 30);
+                    int maxThumbY = scrollbarHeight - thumbHeight;
+
+                    int thumbY = scrollbarY + (int)(((float)scrollOffset / maxScrollOffset) * maxThumbY);
+
+                    Rectangle thumbBounds = new Rectangle(scrollbarX, thumbY, 12, thumbHeight);
+                    if (thumbBounds.contains(x, y)) {
+                        draggingScrollbar = true;
+                        dragStartY = y;
+                        initialScrollOffset = scrollOffset;
+                    }
+
+                    //Back button
                     if (backButtonBounds != null && backButtonBounds.contains(click)) {
                         gameOver = true;
                         gameState = playState; // or a custom gameOverState if you prefer
@@ -321,16 +364,29 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
                         hoveredButton = resumeButtonBounds;
                     } else if (restartButtonBounds != null && restartButtonBounds.contains(mouse)) {
                         hoveredButton = restartButtonBounds;
+                    } else if (menuButtonBounds != null && menuButtonBounds.contains(mouse)) {
+                        hoveredButton = menuButtonBounds;
                     }
-                } else if (gameOver) {
+                } else if (gameOver && gameState != leaderboardState) {
                     if (leaderboardButtonBounds != null && leaderboardButtonBounds.contains(mouse)) {
                         hoveredButton = leaderboardButtonBounds;
                     } else if (returnButtonBounds != null && returnButtonBounds.contains(mouse)) {
                         hoveredButton = returnButtonBounds;
+                    } else if (restartButtonBounds != null && restartButtonBounds.contains(mouse)) {
+                        hoveredButton = restartButtonBounds;
                     }
+
                 } else if (gameState == leaderboardState) {
                     if (backButtonBounds != null && backButtonBounds.contains(mouse)) {
                         hoveredButton = backButtonBounds;
+                    }
+                } else if (gameOver && gameState != leaderboardState) {
+                    if (restartButtonBounds != null && restartButtonBounds.contains(mouse)) {
+                        hoveredButton = restartButtonBounds;
+                    } else if (leaderboardButtonBounds != null && leaderboardButtonBounds.contains(mouse)) {
+                        hoveredButton = leaderboardButtonBounds;
+                    } else if (returnButtonBounds != null && returnButtonBounds.contains(mouse)) {
+                        hoveredButton = returnButtonBounds;
                     }
                 }
 
@@ -346,11 +402,13 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
                 }
             }
         });
+        
 
         gameStartTimer = System.currentTimeMillis() + GAME_START_DELAY;
         gameLoop = new Timer(40, this); // 25fps (1000/40)
         gameLoop.start();
         gameState = playState;
+        addMouseWheelListener(this);
     }
 
     public void loadMap() {
@@ -551,7 +609,7 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
 
         // Draw score and lives
         g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
-        if (gameOver) {
+        if (gameOver  && gameState != leaderboardState) {
             drawGameOverScreen(g);
         } else {
             g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
@@ -1307,7 +1365,6 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         repaint();
     }
     
-    // Replace the handleBufferedDirection method with this improved version
     private void handleBufferedDirection() {
         if (bufferedDirection != pacman.direction) {
             // Save original position and direction
@@ -1567,10 +1624,10 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         g.drawString(restartText, centerX + (buttonWidth - fm.stringWidth(restartText)) / 2, restartY);
 
         // Exit
-        String exitText = "EXIT";
+        String exitText = "RETURN TO MENU";
         int exitY = restartY + spacing;
-        exitButtonBounds = new Rectangle(centerX, exitY - buttonHeight + 20, buttonWidth, buttonHeight);
-        g.setColor(hoveredButton == exitButtonBounds ? Color.WHITE : Color.YELLOW);
+        menuButtonBounds = new Rectangle(centerX, exitY - buttonHeight + 20, buttonWidth, buttonHeight);
+        g.setColor(hoveredButton == menuButtonBounds ? Color.WHITE : Color.YELLOW);
         g.drawString(exitText, centerX + (buttonWidth - fm.stringWidth(exitText)) / 2, exitY);
     }
 
@@ -1593,6 +1650,7 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
             customFont = new Font("Arial", Font.PLAIN, SMALL_FONT_SIZE);
         }
     }
+
     private void drawGameOverScreen(Graphics g) {
         g.setColor(new Color(0, 0, 0, 220));
         g.fillRect(0, 0, boardWidth, boardHeight);
@@ -1641,15 +1699,23 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         g.setFont(buttonFont);
         FontMetrics fmBtn = g.getFontMetrics();
 
-        // LEADERBOARD button
+        // RESTART Button
         y += 60;
+        String restartText = "RESTART";
+        int restartX = (boardWidth - fmBtn.stringWidth(restartText)) / 2;
+        restartButtonBounds = new Rectangle(restartX - 10, y - 30, fmBtn.stringWidth(restartText) + 20, 40);
+        g.setColor(hoveredButton == restartButtonBounds ? Color.WHITE : Color.LIGHT_GRAY);
+        g.drawString(restartText, restartX, y);
+
+        // LEADERBOARD Button
+        y += 50;
         String leaderboardText = "LEADERBOARD";
         int lbX = (boardWidth - fmBtn.stringWidth(leaderboardText)) / 2;
         leaderboardButtonBounds = new Rectangle(lbX - 10, y - 30, fmBtn.stringWidth(leaderboardText) + 20, 40);
         g.setColor(hoveredButton == leaderboardButtonBounds ? Color.WHITE : Color.LIGHT_GRAY);
         g.drawString(leaderboardText, lbX, y);
 
-        // RETURN TO MENU button
+        // RETURN TO MENU Button
         y += 50;
         String returnText = "RETURN TO MENU";
         int retX = (boardWidth - fmBtn.stringWidth(returnText)) / 2;
@@ -1677,7 +1743,6 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         g.drawString("GAME OVER - FINAL SCORE: " + score, tileSize * 2, tileSize * 3 + 10);
 
         g.setColor(Color.WHITE);
-        g.drawString("PRESS SPACE TO RESTART", tileSize * 2, tileSize * 4 + 5);
 
         // Table headers
         g.setFont(customFont.deriveFont(Font.BOLD, SMALL_FONT_SIZE));
@@ -1712,23 +1777,49 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         // Draw leaderboard rows
         List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
         g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
-        int y = tableStartY + rowHeight;
-        for (int i = 0; i < Math.min(20, topPlayers.size()); i++) {
+        int totalEntries = topPlayers.size();
+        int tableY = tableStartY + rowHeight;
+
+        // Determine visible window
+        int startIndex = scrollOffset / entryHeight;
+        int yOffset = -(scrollOffset % entryHeight);
+
+        for (int i = startIndex; i < Math.min(startIndex + visibleEntries + 1, topPlayers.size()); i++) {
             PlayerScore p = topPlayers.get(i);
+            int y = tableY + (i - startIndex) * entryHeight + yOffset;
 
             // Alternate row colors
             if (i % 2 == 0) g.setColor(new Color(30, 30, 30));
             else g.setColor(new Color(50, 50, 50));
-            g.fillRect(0, y, boardWidth, rowHeight);
+            g.fillRect(0, y, boardWidth, entryHeight);
 
             // Text
             g.setColor(Color.LIGHT_GRAY);
             g.drawString(String.valueOf(p.getRank()), col1X, y + 20);
             g.drawString(p.getName(), col2X, y + 20);
             g.drawString(String.valueOf(p.getScore()), col3X, y + 20);
-
-            y += rowHeight;
         }
+        // Scrollbar rendering
+        int totalHeight = totalEntries * entryHeight;
+        int visibleHeight = visibleEntries * entryHeight;
+        if (totalHeight > visibleHeight) {
+            int scrollbarX = boardWidth - 20;
+            int scrollbarWidth = 12;
+            int scrollbarTrackY = tableStartY + rowHeight;
+            int scrollbarTrackHeight = visibleHeight;
+
+            int scrollbarHeight = (int) ((float) visibleHeight / totalHeight * visibleHeight);
+            int scrollbarY = scrollbarTrackY + (int) ((float) scrollOffset / totalHeight * scrollbarTrackHeight);
+
+            // Track
+            g.setColor(Color.LIGHT_GRAY);
+            g.fillRect(scrollbarX, scrollbarTrackY, scrollbarWidth, scrollbarTrackHeight);
+
+            // Thumb
+            g.setColor(Color.DARK_GRAY);
+            g.fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
+        }
+
     }
     
     @Override
@@ -1746,16 +1837,7 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
                 }
                 return;
             }
-            // Leaderboard Screen game reset
-            if (key == KeyEvent.VK_SPACE) {
-                if (gameOver && gameState != leaderboardState) {
-                    resetGame();
-                } else if (gameState == leaderboardState) {
-                    // Exit leaderboard, go straight to gameplay
-                    gameOver = false;
-                    gameState = playState;
-                }
-            }
+            
             // Only process movement keys if in play state
             if (gameState == playState) {
                 if (key == KeyEvent.VK_UP) {
@@ -1768,10 +1850,25 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
                     bufferedDirection = 'R';
                 }
             }
-        } else {
-            // Restart game on space if game over
-            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                resetGame();
+        } 
+        // Name entry during Game Over
+        if (gameOver && !nameEntered) {
+            int key = e.getKeyCode();
+
+            if (key == KeyEvent.VK_BACK_SPACE && enteredName.length() > 0) {
+                enteredName = enteredName.substring(0, enteredName.length() - 1);
+            } else if (key == KeyEvent.VK_ENTER) {
+                String nameToSave = enteredName.trim().isEmpty() ? "GUEST" : enteredName.trim();
+                leaderboardManager.addPlayer(new PlayerScore(nameToSave, score));
+                nameEntered = true;
+            } else {
+                // Only allow A-Z, 0-9 and space, limit to 12 characters
+                char c = e.getKeyChar();
+                if (Character.isLetterOrDigit(c) || c == ' ') {
+                    if (enteredName.length() < 12) {
+                        enteredName += c;
+                    }
+                }
             }
         }
     }
@@ -1808,5 +1905,19 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
             repaint();
         }
     }
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        if (gameState == leaderboardState) {
+            List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+            int totalEntries = topPlayers.size();
+            int totalHeight = totalEntries * entryHeight;
+            int visibleHeight = visibleEntries * entryHeight;
+            maxScrollOffset = Math.max(0, totalHeight - visibleHeight);
 
+            scrollOffset += e.getWheelRotation() * entryHeight;
+            scrollOffset = Math.max(0, Math.min(scrollOffset, maxScrollOffset));
+            repaint();
+        }
+    }
 }
+

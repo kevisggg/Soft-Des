@@ -1,6 +1,5 @@
 import javax.swing.JFrame;
 
-//lacking features (note): Game Over feature, power pellets, scared ghost, cherry
 public class App {
     public static void main(String[] args) throws Exception {
         int rowCount = 21;

@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
@@ -170,6 +172,26 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
     public final int playState = 1;
     public final int pauseState = 2;
 
+    // Custom Font
+    private Font customFont;
+    private final int SMALL_FONT_SIZE = 18;
+    private final int LARGE_FONT_SIZE = 48;
+
+    // Pause Screen
+    private Rectangle resumeButtonBounds;
+    private Rectangle restartButtonBounds;
+    private Rectangle exitButtonBounds;
+    private Rectangle hoveredButton = null;
+
+    // Leaderboard
+    private LeaderboardManager leaderboardManager = new LeaderboardManager();
+    public final int leaderboardState = 3;
+    private String enteredName = "";
+    private boolean nameEntered = false;
+    private Rectangle leaderboardButtonBounds;
+    private Rectangle returnButtonBounds;
+    private Rectangle backButtonBounds;
+
     // X = wall, O = skip, P = pac man, ' ' = food
     // Ghosts: b = blue, o = orange, p = pink, r = red
     private String[] tileMap = {
@@ -203,20 +225,22 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         setFocusable(true);
 
         // Load images
-        wallImage = new ImageIcon(getClass().getResource("/Resources/wall.png")).getImage();
-        blueGhostImage = new ImageIcon(getClass().getResource("/Resources/blueGhost.png")).getImage();
-        orangeGhostImage = new ImageIcon(getClass().getResource("/Resources/orangeGhost.png")).getImage();
-        redGhostImage = new ImageIcon(getClass().getResource("/Resources/redGhost.png")).getImage();
-        pinkGhostImage = new ImageIcon(getClass().getResource("/Resources/pinkGhost.png")).getImage();
-        pacmanUpImage = new ImageIcon(getClass().getResource("/Resources/pacmanUp.png")).getImage();
-        pacmanRightImage = new ImageIcon(getClass().getResource("/Resources/pacmanRight.png")).getImage();
-        pacmanDownImage = new ImageIcon(getClass().getResource("/Resources/pacmanDown.png")).getImage();
-        pacmanLeftImage = new ImageIcon(getClass().getResource("/Resources/pacmanLeft.png")).getImage();
-        pacmanWholeImage = new ImageIcon(getClass().getResource("/Resources/pacmanWhole.png")).getImage();
-        eyesImage = new ImageIcon(getClass().getResource("/Resources/ghostEye.png")).getImage();     
-        scaredGhostImage = new ImageIcon(getClass().getResource("/Resources/scaredGhost.png")).getImage();cherryImage = new ImageIcon(getClass().getResource("/Resources/cherry.png")).getImage();
-        cherry2Image = new ImageIcon(getClass().getResource("/Resources/cherry2.png")).getImage();
-    
+        wallImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/wall.png").getImage();
+        blueGhostImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/blueGhost.png").getImage();
+        orangeGhostImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/orangeGhost.png").getImage();
+        redGhostImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/redGhost.png").getImage();
+        pinkGhostImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/pinkGhost.png").getImage();
+        pacmanUpImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/pacmanUp.png").getImage();
+        pacmanRightImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/pacmanRight.png").getImage();
+        pacmanDownImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/pacmanDown.png").getImage();
+        pacmanLeftImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/pacmanLeft.png").getImage();
+        pacmanWholeImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/pacmanWhole.png").getImage();
+        eyesImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/ghostEye.png").getImage();
+        scaredGhostImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/scaredGhost.png").getImage();
+        cherryImage = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/cherry.png").getImage();
+        cherry2Image = new ImageIcon("D:/Academics/Uni 2nd Year/2nd Sem/Software Design/Pacman/res/images/cherry2.png").getImage();
+
+        loadCustomFont();
         // Start cherry timer
         cherryTimer = System.currentTimeMillis() + CHERRY_INTERVAL;
         pacman = new Block(pacmanWholeImage, 0, 0, tileSize, tileSize);
@@ -246,7 +270,83 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
             }
         }
     }
-        
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Point click = e.getPoint();
+
+                if (gameState == pauseState) {
+                    if (resumeButtonBounds != null && resumeButtonBounds.contains(click)) {
+                        gameState = playState;
+                    } else if (restartButtonBounds != null && restartButtonBounds.contains(click)) {
+                        resetGame();
+                        gameState = playState;
+                    }
+                }
+
+                else if (gameOver && gameState != leaderboardState) {
+                    if (!nameEntered && enteredName.length() > 0) {
+                        leaderboardManager.addPlayer(new PlayerScore(enteredName, score));
+                        nameEntered = true;
+                    }
+
+                    if (leaderboardButtonBounds != null && leaderboardButtonBounds.contains(click)) {
+                        gameState = leaderboardState;
+                        repaint();
+                    } else if (returnButtonBounds != null && returnButtonBounds.contains(click)) {
+                        resetGame();
+                        repaint();
+                    }
+                }
+                else if (gameState == leaderboardState) {
+                    if (backButtonBounds != null && backButtonBounds.contains(click)) {
+                        gameOver = true;
+                        gameState = playState; // or a custom gameOverState if you prefer
+                        repaint();
+                    }
+                }
+            }
+        });
+
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                Point mouse = e.getPoint();
+                Rectangle previous = hoveredButton;
+
+                hoveredButton = null;
+
+                if (gameState == pauseState) {
+                    if (resumeButtonBounds != null && resumeButtonBounds.contains(mouse)) {
+                        hoveredButton = resumeButtonBounds;
+                    } else if (restartButtonBounds != null && restartButtonBounds.contains(mouse)) {
+                        hoveredButton = restartButtonBounds;
+                    }
+                } else if (gameOver) {
+                    if (leaderboardButtonBounds != null && leaderboardButtonBounds.contains(mouse)) {
+                        hoveredButton = leaderboardButtonBounds;
+                    } else if (returnButtonBounds != null && returnButtonBounds.contains(mouse)) {
+                        hoveredButton = returnButtonBounds;
+                    }
+                } else if (gameState == leaderboardState) {
+                    if (backButtonBounds != null && backButtonBounds.contains(mouse)) {
+                        hoveredButton = backButtonBounds;
+                    }
+                }
+
+                // Always show hand if hovering any button
+                if (hoveredButton != null) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                } else {
+                    setCursor(Cursor.getDefaultCursor());
+                }
+
+                if (hoveredButton != previous) {
+                    repaint();
+                }
+            }
+        });
+
         gameStartTimer = System.currentTimeMillis() + GAME_START_DELAY;
         gameLoop = new Timer(40, this); // 25fps (1000/40)
         gameLoop.start();
@@ -373,9 +473,21 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        draw(g);
+        draw(g); // Always draw game background
+
+        if (gameState == leaderboardState) {
+            drawLeaderboardScreen(g); // Only draw leaderboard
+            return; // Don't draw any other overlays
+        }
+
+        if (gameState == pauseState) {
+            drawPauseScreen(g);
+        } else if (gameOver) {
+            drawGameOverScreen(g);
+        }
     }
 
     private void animatePacman() {
@@ -438,14 +550,15 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         g.drawImage(pacman.image, pacman.x, pacman.y, pacman.width, pacman.height, null);
 
         // Draw score and lives
-        g.setFont(new Font("Arial", Font.PLAIN, 18));
+        g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
         if (gameOver) {
-            g.setColor(Color.RED);
-            g.drawString("Game Over: " + score, tileSize / 2, tileSize / 2);
+            drawGameOverScreen(g);
         } else {
+            g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
             g.setColor(Color.WHITE);
             g.drawString("Lives: " + lives + "  Score: " + score, tileSize / 2, tileSize / 2);
         }
+        // Draw cherry if active
         if (cherryActive && cherry != null) {
             g.drawImage(cherry.image, cherry.x, cherry.y, cherry.width, cherry.height, null);
         }
@@ -1345,8 +1458,10 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         // Explicitly reset Pac-Man to his original position
         pacman.x = pacman.startX;
         pacman.y = pacman.startY;
-        pacman.direction = 'R';
-        pacman.image = pacmanRightImage;
+        bufferedDirection = 'R';              // Clear previous input
+        pacman.direction = 'R';               // Set visual and movement direction
+        pacman.image = pacmanRightImage;      // Fix facing image
+        pacman.updateVelocity();              // Sync movement direction
 
         gameStarted = false;
         gameStartTimer = System.currentTimeMillis() + GAME_START_DELAY;
@@ -1377,6 +1492,8 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         cherryActive = false;
         cherry = null;
         cherryTimer = System.currentTimeMillis() + CHERRY_INTERVAL;
+        enteredName = "";
+        nameEntered = false;
     }
     
     private void resetForNextLevel() {
@@ -1412,23 +1529,206 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
     }
 
     public void drawPauseScreen(Graphics g) {
-        // Center the pause text on the screen
-        g.setColor(new Color(0, 0, 0, 180)); // Semi-transparent black overlay
+        // Overlay
+        g.setColor(new Color(0, 0, 0, 180));
         g.fillRect(0, 0, boardWidth, boardHeight);
 
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 48));
-        String text = "PAUSED";
-        
-        // Get font metrics to center text precisely
+        // Title
+        g.setFont(customFont.deriveFont(Font.BOLD, LARGE_FONT_SIZE));
+        g.setColor(Color.YELLOW);
+        String title = "PAUSED";
         FontMetrics fm = g.getFontMetrics();
-        int textWidth = fm.stringWidth(text);
-        int textHeight = fm.getHeight();
-        
-        int x = (boardWidth - textWidth) / 2;
-        int y = (boardHeight - textHeight) / 2;
-        
-        g.drawString(text, x, y);
+        int titleX = (boardWidth - fm.stringWidth(title)) / 2;
+        int titleY = boardHeight / 4;
+        g.drawString(title, titleX, titleY);
+
+        // Button font
+        g.setFont(customFont.deriveFont(Font.PLAIN, LARGE_FONT_SIZE / 2));
+        fm = g.getFontMetrics();
+
+        int buttonWidth = 200;
+        int buttonHeight = 40;
+        int centerX = (boardWidth - buttonWidth) / 2;
+        int startY = titleY + 60;
+        int spacing = 60;
+
+        // Resume
+        String resumeText = "RESUME";
+        int resumeY = startY;
+        resumeButtonBounds = new Rectangle(centerX, resumeY - buttonHeight + 20, buttonWidth, buttonHeight);
+        g.setColor(hoveredButton == resumeButtonBounds ? Color.WHITE : Color.YELLOW);
+        g.drawString(resumeText, centerX + (buttonWidth - fm.stringWidth(resumeText)) / 2, resumeY);
+
+        // Restart
+        String restartText = "RESTART";
+        int restartY = resumeY + spacing;
+        restartButtonBounds = new Rectangle(centerX, restartY - buttonHeight + 20, buttonWidth, buttonHeight);
+        g.setColor(hoveredButton == restartButtonBounds ? Color.WHITE : Color.YELLOW);
+        g.drawString(restartText, centerX + (buttonWidth - fm.stringWidth(restartText)) / 2, restartY);
+
+        // Exit
+        String exitText = "EXIT";
+        int exitY = restartY + spacing;
+        exitButtonBounds = new Rectangle(centerX, exitY - buttonHeight + 20, buttonWidth, buttonHeight);
+        g.setColor(hoveredButton == exitButtonBounds ? Color.WHITE : Color.YELLOW);
+        g.drawString(exitText, centerX + (buttonWidth - fm.stringWidth(exitText)) / 2, exitY);
+    }
+
+    private void loadCustomFont() {
+        try {
+            // Load the font file
+            customFont = Font.createFont(
+                Font.TRUETYPE_FONT,
+                new File("D:\\Academics\\Uni 2nd Year\\2nd Sem\\Software Design\\Pacman\\res\\fonts/Pixeboy-z8XGD.ttf") // Update this path to where your font is located
+            );
+            
+            // Register the font with the graphics environment
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(customFont);
+            
+            System.out.println("Custom font loaded successfully: Pixeboy");
+        } catch (IOException | FontFormatException e) {
+            System.out.println("Error loading custom font: " + e.getMessage());
+            // Fallback to default font if custom font fails to load
+            customFont = new Font("Arial", Font.PLAIN, SMALL_FONT_SIZE);
+        }
+    }
+    private void drawGameOverScreen(Graphics g) {
+        g.setColor(new Color(0, 0, 0, 220));
+        g.fillRect(0, 0, boardWidth, boardHeight);
+
+        // Fonts
+        Font titleFont = customFont.deriveFont(Font.BOLD, LARGE_FONT_SIZE);
+        Font infoFont = customFont.deriveFont(Font.PLAIN, LARGE_FONT_SIZE - 10);
+        Font mediumFont = customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE + 2);
+        Font buttonFont = customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE + 4);
+
+        // Y tracker
+        int y = tileSize * 3;
+
+        // GAME OVER
+        g.setFont(titleFont);
+        g.setColor(Color.RED);
+        String title = "GAME OVER";
+        FontMetrics fmTitle = g.getFontMetrics();
+        g.drawString(title, (boardWidth - fmTitle.stringWidth(title)) / 2, y);
+
+        // SCORE and RANK
+        int potentialRank = getPlayerRank(score);
+        g.setFont(infoFont);
+        g.setColor(Color.YELLOW);
+        y += 60;
+
+        String scoreStr = "SCORE: " + score;
+        FontMetrics fmInfo = g.getFontMetrics();
+        g.drawString(scoreStr, (boardWidth - fmInfo.stringWidth(scoreStr)) / 2, y);
+
+        y += 40;
+        String rankStr = "RANK: " + (potentialRank == -1 ? "N/A" : potentialRank);
+        g.drawString(rankStr, (boardWidth - fmInfo.stringWidth(rankStr)) / 2, y);
+
+        // Name Entry (only if high score)
+        if (potentialRank != -1) {
+            g.setFont(mediumFont);
+            g.setColor(Color.CYAN);
+            y += 50;
+            String nameLine = "ENTER NAME: " + enteredName + (nameEntered ? "" : "_");
+            FontMetrics fmMed = g.getFontMetrics();
+            g.drawString(nameLine, (boardWidth - fmMed.stringWidth(nameLine)) / 2, y);
+        }
+
+        // Buttons
+        g.setFont(buttonFont);
+        FontMetrics fmBtn = g.getFontMetrics();
+
+        // LEADERBOARD button
+        y += 60;
+        String leaderboardText = "LEADERBOARD";
+        int lbX = (boardWidth - fmBtn.stringWidth(leaderboardText)) / 2;
+        leaderboardButtonBounds = new Rectangle(lbX - 10, y - 30, fmBtn.stringWidth(leaderboardText) + 20, 40);
+        g.setColor(hoveredButton == leaderboardButtonBounds ? Color.WHITE : Color.LIGHT_GRAY);
+        g.drawString(leaderboardText, lbX, y);
+
+        // RETURN TO MENU button
+        y += 50;
+        String returnText = "RETURN TO MENU";
+        int retX = (boardWidth - fmBtn.stringWidth(returnText)) / 2;
+        returnButtonBounds = new Rectangle(retX - 10, y - 30, fmBtn.stringWidth(returnText) + 20, 40);
+        g.setColor(hoveredButton == returnButtonBounds ? Color.WHITE : Color.LIGHT_GRAY);
+        g.drawString(returnText, retX, y);
+    }
+
+    private void drawLeaderboardScreen(Graphics g){
+        // Background overlay
+        g.setColor(new Color(0, 0, 0, 220));
+        g.fillRect(0, 0, boardWidth, boardHeight);
+
+        // Title: "LEADERBOARD"
+        g.setFont(customFont.deriveFont(Font.BOLD, LARGE_FONT_SIZE));
+        g.setColor(Color.ORANGE);
+        String title = "LEADERBOARD";
+        FontMetrics fmTitle = g.getFontMetrics();
+        int titleX = (boardWidth - fmTitle.stringWidth(title)) / 2;
+        g.drawString(title, titleX, tileSize * 2);
+
+        // Subheading: Game Over & Score
+        g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
+        g.setColor(Color.YELLOW);
+        g.drawString("GAME OVER - FINAL SCORE: " + score, tileSize * 2, tileSize * 3 + 10);
+
+        g.setColor(Color.WHITE);
+        g.drawString("PRESS SPACE TO RESTART", tileSize * 2, tileSize * 4 + 5);
+
+        // Table headers
+        g.setFont(customFont.deriveFont(Font.BOLD, SMALL_FONT_SIZE));
+        FontMetrics fm = g.getFontMetrics();
+        int col1X = tileSize;
+        int col2X = tileSize * 5;
+        int col3X = boardWidth - tileSize * 5;
+
+        int tableStartY = tileSize * 5;
+        int rowHeight = 28;
+
+         // Back Button
+        String backText = "< BACK";
+        g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE + 2));
+        int backX = tileSize;
+        int backY = tileSize * 2;
+        backButtonBounds = new Rectangle(backX - 5, backY - 25, fm.stringWidth(backText) + 10, 30);
+
+        g.setColor(hoveredButton == backButtonBounds ? Color.WHITE : Color.CYAN);
+        g.drawString(backText, backX, backY);
+
+        // Draw header row background
+        g.setColor(new Color(180, 140, 200)); // Light purple
+        g.fillRect(0, tableStartY, boardWidth, rowHeight);
+
+        // Draw header text
+        g.setColor(Color.BLACK);
+        g.drawString("RANK", col1X, tableStartY + 20);
+        g.drawString("NAME", col2X, tableStartY + 20);
+        g.drawString("SCORE", col3X, tableStartY + 20);
+
+        // Draw leaderboard rows
+        List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+        g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
+        int y = tableStartY + rowHeight;
+        for (int i = 0; i < Math.min(20, topPlayers.size()); i++) {
+            PlayerScore p = topPlayers.get(i);
+
+            // Alternate row colors
+            if (i % 2 == 0) g.setColor(new Color(30, 30, 30));
+            else g.setColor(new Color(50, 50, 50));
+            g.fillRect(0, y, boardWidth, rowHeight);
+
+            // Text
+            g.setColor(Color.LIGHT_GRAY);
+            g.drawString(String.valueOf(p.getRank()), col1X, y + 20);
+            g.drawString(p.getName(), col2X, y + 20);
+            g.drawString(String.valueOf(p.getScore()), col3X, y + 20);
+
+            y += rowHeight;
+        }
     }
     
     @Override
@@ -1437,7 +1737,7 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
             int key = e.getKeyCode();
             
             // Add pause functionality
-            if (key == KeyEvent.VK_P) {
+            if (key == KeyEvent.VK_P || key == KeyEvent.VK_ESCAPE) {
                 // Toggle between play and pause states
                 if (gameState == playState) {
                     gameState = pauseState;
@@ -1446,7 +1746,16 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
                 }
                 return;
             }
-            
+            // Leaderboard Screen game reset
+            if (key == KeyEvent.VK_SPACE) {
+                if (gameOver && gameState != leaderboardState) {
+                    resetGame();
+                } else if (gameState == leaderboardState) {
+                    // Exit leaderboard, go straight to gameplay
+                    gameOver = false;
+                    gameState = playState;
+                }
+            }
             // Only process movement keys if in play state
             if (gameState == playState) {
                 if (key == KeyEvent.VK_UP) {
@@ -1467,6 +1776,17 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
         }
     }
     
+    private int getPlayerRank(int score) {
+        List<PlayerScore> top = leaderboardManager.getTopPlayers();
+        int rank = 1;
+        for (PlayerScore p : top) {
+            if (score < p.getScore()) {
+                rank++;
+            }
+        }
+        return (rank > 20) ? -1 : rank;
+    }
+
     @Override
     public void keyReleased(KeyEvent e) {
         // Not used but required by KeyListener interface
@@ -1474,6 +1794,19 @@ public class Pacman extends JPanel implements ActionListener, KeyListener {
     
     @Override
     public void keyTyped(KeyEvent e) {
-        // Not used but required by KeyListener interface
+        int potentialRank = getPlayerRank(score);
+        if (gameOver && !nameEntered && potentialRank != -1) {
+            char c = e.getKeyChar();
+            if (Character.isLetterOrDigit(c) && enteredName.length() < 10) {
+                enteredName += Character.toUpperCase(c);
+            } else if (c == '\b' && enteredName.length() > 0) {
+                enteredName = enteredName.substring(0, enteredName.length() - 1);
+            } else if (c == '\n' && enteredName.length() > 0) {
+                leaderboardManager.addPlayer(new PlayerScore(enteredName, score));
+                nameEntered = true;
+            }
+            repaint();
+        }
     }
+
 }

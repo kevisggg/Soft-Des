@@ -1,21 +1,16 @@
 package entity;
-
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-
 import main.CollisionChecker;
 import main.GamePanel;
 import main.KeyHandler;
-import main.ScoreHandler;
 import object.Bomb;
 import object.PowerUp;
 
 public class Player extends Entity{
 	private KeyHandler keyH;
 	private PowerUp obj;
-	//private ScoreHandler scoreH;
 	private int bombCnt, bombRadius, bombsPlaced, bombCooldown, lives, invincibleCnt, invincibleDuration, blinkInterval, collisionTile;
 	private boolean  isInvincible, isVisible, bombAlreadyPlaced;
 	
@@ -40,9 +35,9 @@ public class Player extends Entity{
 		collisionBoxDefaultX = collisionBox.x;
 		collisionBoxDefaultY = collisionBox.y;
 		direction = "down";
-		bombCnt = 1;///////
+		bombCnt = 1;
 		bombsPlaced = 0;
-		bombRadius = 1;//////////
+		bombRadius = 1;
 		bombCooldown = 0;
 		invincibleCnt = 0;
 		isInvincible = false;
@@ -73,14 +68,6 @@ public class Player extends Entity{
 	public int getBombsAvail() {
 		return bombCnt-bombsPlaced;
 	}
-	
-	/*public void setBombCount(int bombCnt) {
-		this.bombCnt = bombCnt;
-	}
-	
-	public void setBombRadius(int bombRadius) {
-		this.bombRadius = bombRadius;
-	}*/
 	
 	public int getBombCount() {
 		return bombCnt;
@@ -126,7 +113,6 @@ public class Player extends Entity{
 			setVisibility(true);
 		}
 	}
-	//make lives = 0 checker?
 	
 	public void update() {
 		bombCooldown++;
@@ -139,18 +125,15 @@ public class Player extends Entity{
 			if(keyH.getSpace()==true) {
 				//check if bombs available, MAKE METHOD
 				collisionTile = gp.getTileManager().getMapTileNum((worldX + collisionBox.x+5)/gp.tileSize, (worldY+collisionBox.y+10)/gp.tileSize);
-				System.out.println("=====" + worldX/gp.tileSize + "   " + worldY/gp.tileSize);
 				if(bombsPlaced < bombCnt && !gp.getTileManager().getTileCollision(collisionTile)) {
 					bombAlreadyPlaced = false;
 					for(Bomb b: gp.getBombs()) {
 						if((b.getX()+ collisionBox.x+5)/gp.tileSize == (worldX + collisionBox.x+5)/gp.tileSize && (b.getY()+ collisionBox.x+10)/gp.tileSize == (worldY+collisionBox.y+10)/gp.tileSize) {
 							bombAlreadyPlaced = true;
-							System.out.println("bombAlreadyPlaced TRUE");
 							break;
 						}
 					}
 					if(!bombAlreadyPlaced) {
-						System.out.println("BOMB DROPPED");
 						dropBomb();
 					}
 				}
@@ -202,8 +185,6 @@ public class Player extends Entity{
 				}
 			}
 			
-			
-			
 			//COLLISION FALSE, THEN PLAYER MOVE
 			if(collisionOn == false) {
 				switch(direction) {
@@ -226,10 +207,9 @@ public class Player extends Entity{
 			}
 		}
 		if(entityHit) {
-			System.out.println("PLAYER HIT");
-			//damage
+			//System.out.println("PLAYER HIT");
 			lives--;
-			System.out.println("Lives: " + lives);
+			//System.out.println("Lives: " + lives);
 			
 			entityHit = false;
 			gp.playSFX(3);
@@ -243,22 +223,18 @@ public class Player extends Entity{
 				setVisibility(true);
 			}
 		}
-		//System.out.println(worldX + " " + worldY);///////////////////////////////
 	}
 	
 	
 	private void increaseRange() {
 		bombRadius++;
-		System.out.println("BOMBS RADIUS: "+bombRadius);
 	}
 
 	private void increaseCapacity() {
 		bombCnt++;
-		System.out.println("BOMBS AVAIL: "+bombCnt);
 	}
 
 	public void collideEnemy() {
-		System.out.println("COLLISION");
 		setHit(true);
 		setInvincible(true);
 		gp.playSFX(3);
@@ -304,12 +280,10 @@ public class Player extends Entity{
 		if(isVisible) {
 			g2.drawImage(image, worldX, worldY, null);
 		}
-		//g2.setColor(Color.WHITE);
-		//g2.draw(this.collisionBox);
-		g2.setColor(Color.RED); // Set color for visibility
 	    
 		//COLLISION BOX TESTER
-		/*Rectangle actualCollisionBox = new Rectangle(
+		/*g2.setColor(Color.RED);
+		 * Rectangle actualCollisionBox = new Rectangle(
 	        worldX + collisionBox.x,  // Absolute X position on screen
 	        worldY + collisionBox.y,  // Absolute Y position on screen
 	        collisionBox.width,

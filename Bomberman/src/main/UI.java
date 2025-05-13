@@ -7,14 +7,10 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 public class UI {
@@ -41,6 +37,7 @@ public class UI {
 	private String text;
 	private Composite originalComposite;
 	private int x,y;
+	private boolean usernameRequested = false;
 	
 	public UI(GamePanel gp, MouseHandler mouseH, ScoreHandler scoreH) {
 		this.gp = gp;
@@ -83,44 +80,13 @@ public class UI {
 		return font;
 	}
 	
-	/*public static void setColor(Graphics2D g2, String hexColor) {
-        Color color = Color.decode(hexColor);
-        g2.setColor(color);
-    }*/
-	
 	public void draw(Graphics2D g2) {
 		this.g2 = g2;
 		this.originalComposite = g2.getComposite();
-		//g2.setFont(menu_60);
-		//g2.setColor(Color.white);
-		//drawHUD();
-		/*if(gp.getGameState() == gp.instructionState) {
-			drawInstruction();
-		}
-		else if(gp.getGameState() == gp.playState) {
-			
-		}
-		else if(gp.getGameState() == gp.pauseState) {
-			
-			drawPauseScreen();
-		}
-		else if(gp.getGameState() == gp.gameoverState) {
-			drawGameoverScreen();
-		}
-		else if(gp.getGameState() == gp.winState) {
-			
-			drawWinScreen();
-			
-		}*/
 		gp.getGameState().draw();
 	}
 	
-	/*public void setComp(float alpha) {
-		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-	}*/
-	
 	public void setTextBG(int recScreenX, int recScreenY, int width, int height) {
-		//setComp(alpha70);
 		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha70));
 		g2.setColor(Color.black);
 		g2.fillRect(recScreenX, recScreenY, width, height);
@@ -135,9 +101,9 @@ public class UI {
 	}
 	
 	public void addShadow(int indent, String text, Color colorBack, Color colorFront, int x, int y) {
-		g2.setColor(colorBack);//colorback
+		g2.setColor(colorBack);
 		g2.drawString(text, x+indent, y+indent);
-		g2.setColor(colorFront);//colorfront
+		g2.setColor(colorFront);
 		g2.drawString(text, x, y);
 	}
 	
@@ -162,11 +128,6 @@ public class UI {
 	}
 	
 	public void drawLevel() {
-		//g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha70));
-		/*setComp(alpha70);
-		g2.setColor(Color.black);
-		g2.fillRect(585, 535, gp.tileSize*3+32, 36);
-		g2.setComposite(originalComposite);*/
 		setTextBG(571, 535, gp.tileSize*4, 36);
 		g2.setColor(defaultBlue);
 		g2.setFont(hud_20);
@@ -174,12 +135,11 @@ public class UI {
 		g2.drawString(gp.getLvl(), 696, 564);
 	}
 	
-	public void drawScore() {//768
+	public void drawScore() {
 		setTextBG(379, 5, gp.tileSize*8, 36);
 		g2.setColor(defaultBlue);
 		g2.setFont(hud_20);
 		g2.drawString("Score:", 384, 34);
-		//int h = getTextX("Score:");
 		g2.drawString(scoreH.getScore(), 504, 34);
 	}
 	
@@ -207,7 +167,6 @@ public class UI {
 		if(mouseH.getClicked()) {
 			Point p = mouseH.getPoint();
 			if (okBounds.contains(p)) {
-	            System.out.println("OK");
 	            gp.playSFX(5);
 	            gp.setPlayState();
 	        }
@@ -219,28 +178,20 @@ public class UI {
 		setBG();
 		g2.setFont(menu_60);
 		text = "PAUSED";
-		
 		x = getTextX(text);
 		y = gp.screenHeight/3;
-		
 		addShadow(5, text, backColor, frontColor, x, y);
-		
 		g2.setColor(Color.white);
 		g2.setFont(hud_20);
 		g2.drawString("RESUME", resumeBounds.x, resumeBounds.y+resumeBounds.height);
 		g2.drawString("RESTART", restartBounds.x, restartBounds.y+restartBounds.height);
 		g2.drawString("EXIT", exitBounds.x, exitBounds.y+exitBounds.height);
-		/*RESUME X LENGTH: 120
-324
-RESTART X LENGTH: 140
-314
-EXIT X LENGTH: 80
-344*/
 		if(mouseH.getClicked()) {
 			Point p = mouseH.getPoint();
 			if (resumeBounds.contains(p)) {
 	            System.out.println("RESUME");
 	            gp.playSFX(5);
+	            gp.playMusic();
 	            gp.setPlayState();
 	        } else if (restartBounds.contains(p)) {
 	            System.out.println("RESTART");
@@ -250,6 +201,7 @@ EXIT X LENGTH: 80
 			else if (exitBounds.contains(p)) {
 				System.out.println("EXIT TO MENU");
 				gp.playSFX(5);
+				//insert exit to menu
 			}
 			mouseH.resetClick();
 		}
@@ -264,8 +216,8 @@ EXIT X LENGTH: 80
 		x = getTextX(text);
 		y = gp.screenHeight/3;
 		addShadow(5, text, backColor, frontColor, x, y);
-		
 		g2.setFont(menu_30);
+		
 		//SCORE
 		text = scoreH.out();
 		x = getTextX(text);
@@ -284,30 +236,23 @@ EXIT X LENGTH: 80
 		if(!gp.getCurPlayerRank().equals("-")) {//doesnt require username if player not ranked
 			createDialogBox();
 		}
-		
 		returnToMenu();
-		//RETURN TO MENU
-		
 	}
 	
 	private void returnToMenu() {
 		g2.drawString("RETURN TO MENU", returnMenuBounds.x, returnMenuBounds.y+returnMenuBounds.height);
-		//g2.draw(returnMenuBounds);
 		text = "RETURN TO MENU";
 		x = getTextX(text);
-		//System.out.println("GET TEXT X " + x);
 		y = gp.screenHeight/2+120;
 		g2.setColor(Color.white);
-		//g2.drawString(text, x, y);
 		
 		if(mouseH.getClicked()) {
 			Point p = mouseH.getPoint();
 			if (returnMenuBounds.contains(p)) {
 	            System.out.println("RETURN");
 	            gp.playSFX(5);
-	            gp.usernameRequested = false;
-	            gp.restartGame();
-	            gp.setPlayState();
+	            gp.restartGame();//CHANGE TO EXIT TO MENU
+	            usernameRequested = false;
 	            gp.saveData();
 	        }
 			mouseH.resetClick();
@@ -315,8 +260,8 @@ EXIT X LENGTH: 80
 	}
 
 	public void createDialogBox() {
-		if(!gp.usernameRequested) {
-			gp.usernameRequested = true;
+		if(!usernameRequested) {
+			usernameRequested = true;
 	        SwingUtilities.invokeLater(() -> {
 	        	UsernameDialog dialog = new UsernameDialog((JFrame) SwingUtilities.getWindowAncestor(gp));
 	        	do {
@@ -326,18 +271,13 @@ EXIT X LENGTH: 80
 		            String username = dialog.getUsername();
 		            if (username != null) {
 		                gp.setCurPlayerName(username);
-		                //gp.restartGame(); // Reset the game
 		            }
 	        	}while(!dialog.getUserValid());
-	        	
-	            
-	            //gp.restartGame(); // Reset the game
 	        });
 		}
 	}
 	
 	public void drawWinScreen() {
-		//g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha50));
 		setBG();
 		g2.setFont(menu_50);
 		text = "LEVEL COMPLETE";
@@ -354,8 +294,7 @@ EXIT X LENGTH: 80
 	}
 	
 	public int getTextX(String text) {
-		int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth(); //CREATE TEXT LENGTH FUNCTION
-		//System.out.println(text+" X LENGTH: " + length);
+		int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
 		x = gp.screenWidth/2 - length/2;
 		return x;
 	}

@@ -1,7 +1,7 @@
 package main;
 
 public class InsState implements GameState{
-	UI ui;
+	private UI ui;
 	public InsState(UI ui) {
 		this.ui = ui;
 	}

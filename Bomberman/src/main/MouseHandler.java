@@ -16,13 +16,10 @@ public class MouseHandler implements MouseListener{
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		//if(gp.getGameState() instanceof PlayState) {
+		if(!(gp.getGameState() instanceof PlayState)) {
 			p = e.getPoint();
-			System.out.println(p);
 			clicked = true;
-			System.out.println(clicked);
-		//}
-		
+		}
 	}
 
 	@Override

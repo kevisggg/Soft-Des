@@ -19,14 +19,12 @@ public class CollisionChecker {
 	private Rectangle playerBox;
 	private boolean hit;
 	private ArrayList<PowerUp> obj;
-	//private Player player;
 	private ArrayList<Explosion> explosions;
 	
 	public CollisionChecker(GamePanel gp, AssetSetter asset, TileManager tileMgr, ArrayList<Explosion> explosions) {
 		this.gp = gp;
 		this.asset = asset;
 		this.tileMgr = tileMgr;
-		//this.player = player;
 		this.explosions = explosions;
 	}
 	
@@ -242,8 +240,8 @@ public class CollisionChecker {
 				int drop=randomDrop();
 				if(drop!=0) {
 					asset.setObject(drop, x*gp.tileSize, y*gp.tileSize);
-					System.out.println("Setting drop " + drop + " at " + x + "," + y);
-					System.out.println("Total objects: " + obj.size());
+					//System.out.println("Setting drop " + drop + " at " + x + "," + y);
+					//System.out.println("Total objects: " + obj.size());
 				}
 				
 			}
@@ -265,16 +263,6 @@ public class CollisionChecker {
 					}
 				}
 			}
-			/* 
-			 *boolean = assetPresent[x][y]; --> in AssetSetter
-			 *OR
-			 *for(inti = 0; i<obj,size; obj++SuperObject obj: obj){
-			 * if get(x),get(y) = x,y
-			 *obj.remove
-			 *
-			 *
-			 *}
-			 **/
 		}
 		return empty;
 	}
@@ -283,7 +271,7 @@ public class CollisionChecker {
 		playerBox = new Rectangle(x,y,width,height);
 		hit=false;
 		for (Explosion e : explosions) {
-	        if (e.collisionBox.intersects(playerBox)) {
+	        if (e.getCollisionBox().intersects(playerBox)) {
 	        	//gp.player.setHit(true);
 		       	//gp.player.setInvincible(true);
 		       	hit = true;
@@ -299,11 +287,11 @@ public class CollisionChecker {
 		int i = random.nextInt(100)+1;//from 1-4
 		if(i>=1 && i<=15) {
 			drop = 1;
-			System.out.println(drop+": CAPACITY PU");
+			//System.out.println(drop+": CAPACITY PU");
 		}
 		else if(i>=16 && i<=30) {
 			drop = 2;
-			System.out.println(drop+": RANGE PU");
+			//System.out.println(drop+": RANGE PU");
 		}
 		return drop;
 	}

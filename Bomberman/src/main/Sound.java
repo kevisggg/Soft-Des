@@ -10,9 +10,10 @@ public class Sound {
 	
 	Clip clip;
 	URL sounds[] = new URL[30];
+	int frame;
 	
 	public Sound() {
-		sounds[0] = getClass().getResource("/sound/BMmusic.wav");
+		sounds[0] = getClass().getResource("/sound/BMMusic.wav");
 		sounds[1] = getClass().getResource("/sound/placeBomb.wav");
 		sounds[2] = getClass().getResource("/sound/explosion.wav");
 		sounds[3] = getClass().getResource("/sound/hitHurt.wav");
@@ -37,6 +38,7 @@ public class Sound {
 	}
 	
 	public void play() {
+		clip.setFramePosition(frame);
 		clip.start();
 	}
 	
@@ -44,8 +46,14 @@ public class Sound {
 		clip.loop(Clip.LOOP_CONTINUOUSLY);
 	}
 	
-	public void stop() {
+	public void pause() {
+		frame = clip.getFramePosition();
 		clip.stop();
+		//clip.close();
 	}
 	
+	public void stop() {
+		clip.stop();
+		frame = 0;
+	}
 }

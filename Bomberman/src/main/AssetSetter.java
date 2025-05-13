@@ -27,9 +27,7 @@ public class AssetSetter {
 	}
 	
 	public void minusCnt() {
-		System.out.println("OLD OBJCOUNT: " + objectCnt);
 		objectCnt--;
-		System.out.println("NEW OBJCOUNT: " + objectCnt);
 	}
 	
 	public void checkObjCnt() {

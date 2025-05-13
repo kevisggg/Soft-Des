@@ -1,8 +1,8 @@
 package main;
 
 public class PauseState implements GameState{
-	UI ui;
-	GamePanel gp;
+	private UI ui;
+	private GamePanel gp;
 	public PauseState(GamePanel gp,UI ui) {
 		this.gp = gp;
 		this.ui = ui;
@@ -23,6 +23,7 @@ public class PauseState implements GameState{
 	public void pause() {
 		gp.setPlayState();
 		gp.playSFX(6);
+		gp.playMusic();
 	}
 
 }

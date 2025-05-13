@@ -4,19 +4,17 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-
 import javax.imageio.ImageIO;
-
 import main.GamePanel;
 import main.ImageScaler;
-import object.Bomb;
+
 
 public class Explosion{
-	public int worldX, worldY, timeCount, timer;
-	GamePanel gp;
-	BufferedImage exp;
-	private boolean expActive, expStart, hasHitPlayer;
-	public Rectangle collisionBox;
+	private int worldX, worldY, timeCount, timer;
+	private GamePanel gp;
+	private BufferedImage exp;
+	private boolean expActive, expStart;
+	private Rectangle collisionBox;
 	public Explosion(int x, int y, GamePanel gp) {
 		worldX = x;
 		worldY = y;
@@ -90,5 +88,10 @@ public class Explosion{
 			g2.drawImage(exp, worldX, worldY, null);
 			//g2.draw(collisionBox);
 		}
+	}
+
+	public Rectangle getCollisionBox() {
+		// TODO Auto-generated method stub
+		return collisionBox;
 	}
 }

@@ -59,6 +59,7 @@ public class GamePanel extends JPanel implements Runnable{
 		this.setDoubleBuffered(true);
 		this.addKeyListener(keyH);
 		this.addMouseListener(mouseH);
+		this.addMouseMotionListener(mouseH);
 		this.setFocusable(true);
 		loadData();
 		setInsState();
@@ -98,6 +99,7 @@ public class GamePanel extends JPanel implements Runnable{
 	public void setPauseState() {gamestateH.setState(new PauseState(this, ui)); pauseMusic();}
 	public void setOverState() {gamestateH.setState(new GameOverState(ui)); stopMusic();}
 	public void setWinState() {gamestateH.setState(new WinState(this, ui));}
+	public void setNameEntered(boolean isEntered) {keyH.setNameEntered(isEntered);}
 	public void setCurPlayerName(String name) {currentPlayer.setName(name); mouseH.resetClick();}
 	public void setObjXY(int x, int y) {
 		obj.getLast().setX(x);
@@ -137,7 +139,7 @@ public class GamePanel extends JPanel implements Runnable{
 		scoreH.resetScore();
 		ui.resetToggleLeaderboard();
 	    level = 1;
-	    keyH.setNameEntered(false);
+	    setNameEntered(false);
 	    keyH.setName("");
 		newLevel();
 	}
@@ -270,5 +272,6 @@ public class GamePanel extends JPanel implements Runnable{
 	            System.out.println("Error saving data.");
 	            e.printStackTrace();
 	        }
+		 System.out.println("DATA SAVED!");
 	}
 }

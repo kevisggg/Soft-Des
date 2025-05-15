@@ -1,5 +1,6 @@
 package main;
 
+import java.awt.Cursor;
 import java.awt.Point;
 
 public class WinState implements GameState{
@@ -31,5 +32,7 @@ public class WinState implements GameState{
 	}
 	@Override
 	public void pause() {}
+	@Override
+	public void hoverHandler(Point p) {gp.setCursor(Cursor.getDefaultCursor());}
 
 }

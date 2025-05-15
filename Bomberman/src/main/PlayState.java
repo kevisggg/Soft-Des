@@ -1,5 +1,6 @@
 package main;
 
+import java.awt.Cursor;
 import java.awt.Point;
 import java.util.ArrayList;
 
@@ -139,4 +140,6 @@ public class PlayState implements GameState {
 		}
 		gp.playSFX(2);
 	}
+	@Override
+	public void hoverHandler(Point p) {gp.setCursor(Cursor.getDefaultCursor());}
 }

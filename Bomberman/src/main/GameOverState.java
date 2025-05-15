@@ -23,4 +23,9 @@ public class GameOverState implements GameState{
 		// TODO Auto-generated method stub
 		
 	}
+	@Override
+	public void hoverHandler(Point p) {
+		// TODO Auto-generated method stub
+		ui.hoverGameOver(p);
+	}
 }

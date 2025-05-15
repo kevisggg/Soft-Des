@@ -3,6 +3,7 @@ package main;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Composite;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -19,15 +20,18 @@ public class UI {
 	private Graphics2D g2;
 	private final float alpha50 = 0.5f;
 	private final float alpha70 = 0.7f;
-	private Font menu_60, menu_50, menu_30, hud_40, hud_20;
+	private Font menu_70, menu_50, hud_40, hud_20;
 	private BufferedImage life, bomb, PUcap, PUrange, image, ins;
 	private ImageScaler s;
-	private final Rectangle resumeBounds = new Rectangle(324, 200, 120, 20);
-	private final Rectangle restartBounds = new Rectangle(314, 250, 140, 20);
+	private final Rectangle resumeBounds = new Rectangle(308, 230, 152, 30);
+	private final Rectangle restartBounds = new Rectangle(295, 280, 178, 30);
 	private final Rectangle returnMenuBounds = new Rectangle(224, 408, 321, 30);
-	private final Rectangle exitBounds = new Rectangle(344, 300, 80, 20);
+	private final Rectangle restartGameOverBounds = new Rectangle(295, 348, 178, 30);
+	private final Rectangle viewLeaderboardBounds = new Rectangle(189, 378, 390, 30);
+	private final Rectangle exitBounds = new Rectangle(333, 330, 102, 30);
 	private final Rectangle okBounds = new Rectangle(356, 500, 55, 25);
 	private final Rectangle backBounds = new Rectangle(10, 10, 104, 20);
+	private Rectangle hoveredButton;
 	private final String sbackColor = "#CC6600";
 	private final String sfrontColor = "#FFD966";
 	private final String sdefaultBlue = "#3162C3";
@@ -46,9 +50,8 @@ public class UI {
 		this.gp = gp;
 		this.mouseH = mouseH;
 		this.scoreH = scoreH;
-		menu_60 = createFont(70);
+		menu_70 = createFont(70);
 		menu_50 = createFont(50);
-	//	menu_30 = createFont(45);
 		hud_40 = createFont(40);
 		hud_20 = createFont(20);
 		backColor = getColor(sbackColor);
@@ -91,6 +94,60 @@ public class UI {
 		back = false;
 	}
 	
+	public void hoverPause(Point p) {
+		hoveredButton = null;
+		if(resumeBounds.contains(p)) {
+			hoveredButton = resumeBounds;
+		} else if(restartBounds.contains(p)) {
+			hoveredButton = restartBounds;
+		} else if(exitBounds.contains(p)) {
+			hoveredButton = exitBounds;
+		}
+		
+		if (hoveredButton != null) {
+            gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        } else {
+        	gp.setCursor(Cursor.getDefaultCursor());
+        }
+	}
+	
+	public void hoverGameOver(Point p) {
+		hoveredButton = null;
+		
+		if(toggleLeaderboard == false) {
+			if(restartGameOverBounds.contains(p)) {
+				hoveredButton = restartGameOverBounds;
+			} else if(viewLeaderboardBounds.contains(p)) {
+				hoveredButton = viewLeaderboardBounds;
+			} else if(returnMenuBounds.contains(p)) {
+				hoveredButton = returnMenuBounds;
+			}
+		} else {
+			if(backBounds.contains(p)) {
+				hoveredButton = backBounds;
+			}
+		}
+		if (hoveredButton != null) {
+            gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        } else {
+        	gp.setCursor(Cursor.getDefaultCursor());
+        }
+		
+	}
+	
+	public void hoverInstructions(Point p) {
+		hoveredButton = null;
+		//System.out.println("CHECKING IN INS");
+		if(okBounds.contains(p)) {
+			hoveredButton = okBounds;
+		}
+		if (hoveredButton != null) {
+            gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        } else {
+        	gp.setCursor(Cursor.getDefaultCursor());
+        }
+	}
+	
 	public Font createFont(int size) {
 		Font font = new Font (gameFont, Font.BOLD, size);
 		return font;
@@ -102,6 +159,7 @@ public class UI {
 		boolean clickedThisFrame = mouseH.getClicked();
 		Point clickPoint = mouseH.getPoint();
 		gp.getGameState().draw(clickedThisFrame, clickPoint);
+		//returnToMenu(clickedThisFrame, clickPoint);
 	}
 	
 	public void setTextBG(int recScreenX, int recScreenY, int width, int height) {
@@ -181,8 +239,10 @@ public class UI {
 		text = "OK";
 		x = getTextX(text);
 		y = okBounds.y;
-		addShadow(3, text, backColor, frontColor, x, y+okBounds.height);
-		g2.draw(okBounds);
+		g2.setColor(hoveredButton == okBounds ? Color.cyan : Color.white);
+		//addShadow(3, text, backColor, col, x, y+okBounds.height);
+		g2.drawString(text, x, y+okBounds.height);
+		//g2.draw(okBounds);
 		if(clickedThisFrame) {
 			Point p = mouseH.getPoint();
 			if (okBounds.contains(clickPoint)) {
@@ -195,19 +255,28 @@ public class UI {
 	
 	public void drawPauseScreen(boolean clickedThisFrame, Point clickPoint) {
 		setBG();
-		g2.setFont(menu_60);
+		g2.setFont(menu_70);
 		text = "PAUSED";
 		x = getTextX(text);
 		y = gp.screenHeight/3;
 		addShadow(5, text, backColor, frontColor, x, y);
-		g2.setColor(Color.white);
-		g2.setFont(hud_40);
+		
+		g2.setFont(menu_50);
+		text = "RESUME";
+		x = getTextX(text);
+		g2.setColor(hoveredButton == resumeBounds ? Color.cyan : Color.white);
 		g2.drawString("RESUME", resumeBounds.x, resumeBounds.y+resumeBounds.height);
+		text = "RESTART";
+		x = getTextX(text);
+		g2.setColor(hoveredButton == restartBounds ? Color.cyan : Color.white);
 		g2.drawString("RESTART", restartBounds.x, restartBounds.y+restartBounds.height);
+		text = "EXIT";
+		x = getTextX(text);
+		g2.setColor(hoveredButton == exitBounds ? Color.cyan : Color.white);
 		g2.drawString("EXIT", exitBounds.x, exitBounds.y+exitBounds.height);
-		g2.draw(resumeBounds);
-		g2.draw(restartBounds);
-		g2.draw(exitBounds);
+		//g2.draw(resumeBounds);
+		//g2.draw(restartBounds);
+		//g2.draw(exitBounds);
 		if(mouseH.getClicked()) {
 			Point p = mouseH.getPoint();
 			if (resumeBounds.contains(p)) {
@@ -234,12 +303,12 @@ public class UI {
 		setBG();
 		
 		//GAME OVER TITLE
-		g2.setFont(menu_50);
+		g2.setFont(menu_70);
 		text = "GAME OVER";
 		x = getTextX(text);
 		y = gp.screenHeight/3;
 		addShadow(5, text, backColor, frontColor, x, y);
-		g2.setFont(menu_30);
+		g2.setFont(menu_50);
 		
 		//SCORE
 		text = scoreH.out();
@@ -255,62 +324,62 @@ public class UI {
 		g2.setColor(Color.white);
 		g2.drawString(text, x, y);
 		
-		returnToMenu(clickedThisFrame, clickPoint);
+		gameOverButtons(clickedThisFrame, clickPoint);
 		
         //DIALOG BOX
 		if(!gp.getCurPlayerRank().equals("-")) {//doesnt require username if player not ranked
 			drawEnterName();
+			if(gp.getNameEntered() && back == false) {
+		        //System.out.println("SAVING TOGGLE");
+		       	 //gp.saveData();
+		       	 toggleLeaderboard = true;
+		        }
 		}
-		System.out.println("BACK: " + back);
-		if(gp.getNameEntered() && back == false) {
-        //System.out.println("SAVING TOGGLE");
-       	 gp.saveData();
-       	 toggleLeaderboard = true;
-        }
-		//System.out.println(gp.getNameEntered());
 		if(toggleLeaderboard==true) {
-			//System.out.println("leadertoggled");
 			drawLeaderboard(clickedThisFrame, clickPoint);
 		}
 	}
 	
 	public void drawEnterName() {
-		 g2.setFont(menu_30);
+		 g2.setFont(menu_50);
         g2.setColor(Color.CYAN);
+        g2.setColor(!gp.getNameEntered() ? Color.cyan : Color.white);
         String nameLine = "ENTER NAME: " + gp.getNameInput() + (gp.getNameEntered() ? "" : "_");
         x = getTextX(nameLine);
 		 y = gp.screenHeight/3+110;
         g2.drawString(nameLine, x, y);
-        System.out.println("NAME ENTERED: " + gp.getNameEntered());
+       // System.out.println("NAME ENTERED: " + gp.getNameEntered());
         
 	}
 	
 	public void drawLeaderboard(boolean clickedThisFrame, Point clickPoint) {
+		//TABLE BACKGROUND
 		g2.setColor(Color.DARK_GRAY);
 		g2.fillRect(0, 0, gp.screenWidth, gp.screenHeight);
+		//BACK and LEADERBOARD text
 		g2.setColor(Color.white);
-		g2.draw(backBounds);
+		//g2.draw(backBounds);
 		g2.setFont(hud_40);
 		text = "< BACK";
+		g2.setColor(hoveredButton == backBounds ? Color.cyan : Color.white);
 		g2.drawString(text, backBounds.x, backBounds.y+backBounds.height);
 		text = "LEADERBOARD";
 		x = getTextX(text);
 		y = 10;
 		addShadow(2, text, backColor, frontColor, x, 30);
 		y = tableStartY + rowHeight;
-		//TABLE BACKGROUND
+		
 		
 		
 		g2.setColor(defaultPurple);
 		g2.fillRect(0, tableStartY, gp.screenWidth, rowHeight);
 		g2.setFont(hud_20);
 		g2.setColor(Color.BLACK);
+		g2.setFont(g2.getFont().deriveFont(Font.PLAIN));
         g2.drawString("RANK", col1X, tableStartY + tableMargin);
         g2.drawString("NAME", col2X, tableStartY + tableMargin);
         g2.drawString("SCORE", col3X, tableStartY + tableMargin);
         BMPlayerLeaderboard p = null;
-        
-        //Math.min(20, GamePanel.bml.getPlayersSize())
         
 		for (int i = 0; i < Math.min(20, GamePanel.bml.getPlayersSize()); i++) {
             p = GamePanel.bml.getPlayer(i);
@@ -328,13 +397,7 @@ public class UI {
 
             y += rowHeight;
         }
-		//FILL IN BLANK ROWS
-		/*if(gp.screenHeight-y>0) {
-			if (i % 2 == 0) g2.setColor(darkGray);
-            else g2.setColor(lightGray);
-			g2.fillRect(0, y, gp.screenWidth, gp.screenHeight-y);
-		}*/
-		System.out.println("CLICK: " + mouseH.getClicked());
+		//System.out.println("CLICK: " + mouseH.getClicked());
 		if(clickedThisFrame) {
 			System.out.println("POINT");
 			Point point = mouseH.getPoint();
@@ -347,24 +410,53 @@ public class UI {
 	        }
 			mouseH.resetClick();
 		}
-		System.out.println("CLICK: " + mouseH.getClicked());
+		//System.out.println("CLICK: " + mouseH.getClicked());
 	}
 	
-	private void returnToMenu(boolean clickedThisFrame, Point clickPoint) {
+	private void gameOverButtons(boolean clickedThisFrame, Point clickPoint) {
+		g2.setFont(menu_50);
+		text = "RESTART";
+		x = getTextX(text);
+		y = gp.screenHeight/2+60+restartGameOverBounds.height;
+		//g2.draw(restartGameOverBounds);
+		g2.setColor(hoveredButton == restartGameOverBounds ? Color.cyan : Color.white);
+		g2.drawString(text, x, y);
+		//g2.setColor(Color.white);
+		
+		text = "VIEW LEADERBOARD";
+		x = getTextX(text);
+		y = gp.screenHeight/2+90+viewLeaderboardBounds.height;
+		//g2.draw(viewLeaderboardBounds);
+		g2.setColor(hoveredButton == viewLeaderboardBounds ? Color.cyan : Color.white);
+		g2.drawString(text, x, y);
+		//g2.setColor(Color.white);
+		
 		text = "RETURN TO MENU";
 		x = getTextX(text);
 		y = gp.screenHeight/2+120+returnMenuBounds.height;
-		g2.draw(returnMenuBounds);
-		g2.drawString("RETURN TO MENU", x, y);
-		g2.setColor(Color.white);
-		if(clickedThisFrame && gp.getNameEntered()) {
+		//g2.draw(returnMenuBounds);
+		g2.setColor(hoveredButton == returnMenuBounds ? Color.cyan : Color.white);
+		g2.drawString(text, x, y);
+		//g2.setColor(Color.white);
+		if(clickedThisFrame && (gp.getNameEntered() || gp.getCurPlayerRank().equals("-"))) {
 			Point p = mouseH.getPoint();
 			if (returnMenuBounds.contains(clickPoint)) {
 	            System.out.println("RETURN");
 	            gp.playSFX(5);
 	            gp.restartGame();//CHANGE TO EXIT TO MENU
-	            gp.saveData();
+	            //gp.saveData();
 	        }
+			else if (viewLeaderboardBounds.contains(clickPoint)) {
+	            System.out.println("leaderboard");
+	            gp.playSFX(5);
+	            toggleLeaderboard = true;
+	        }
+			else if (restartGameOverBounds.contains(clickPoint)) {
+				System.out.println("RESTART GO");
+				gp.playSFX(5);
+				gp.restartGame();
+				//insert exit to menu
+			}
 			mouseH.resetClick();
 		}
 	}
@@ -374,7 +466,7 @@ public class UI {
 		text = "RESTART GAME";
 		x = getTextX(text);
 		y = gp.screenHeight/2+120+returnMenuBounds.height;
-		g2.draw(returnMenuBounds);
+		//g2.draw(returnMenuBounds);
 		g2.drawString("RETURN TO MENU", x, y);
 		g2.setColor(Color.white);
 		if(mouseH.getClicked() && gp.getNameEntered()) {
@@ -383,7 +475,7 @@ public class UI {
 	            System.out.println("RETURN");
 	            gp.playSFX(5);
 	            gp.restartGame();//CHANGE TO EXIT TO MENU
-	            gp.saveData();
+	            //gp.saveData();
 	        }
 			mouseH.resetClick();
 		}
@@ -412,7 +504,7 @@ public class UI {
 	public int getTextX(String text) {
 		int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
 		x = gp.screenWidth/2 - length/2;
-		System.out.println(text +" " + x + " length:" + length);
+		//System.out.println(text +" - x " + x + " length:" + length);
 		return x;
 	}
 	

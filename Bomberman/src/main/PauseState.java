@@ -27,5 +27,11 @@ public class PauseState implements GameState{
 		gp.playSFX(6);
 		gp.playMusic();
 	}
+	
+	@Override
+	public void hoverHandler(Point p) {
+		// TODO Auto-generated method stub
+		ui.hoverPause(p);
+	}
 
 }

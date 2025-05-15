@@ -17,5 +17,10 @@ public class InsState implements GameState{
 	}
 	@Override
 	public void pause() {}
+	@Override
+	public void hoverHandler(Point p) {
+		// TODO Auto-generated method stub
+		ui.hoverInstructions(p);
+	}
 
 }

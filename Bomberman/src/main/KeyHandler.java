@@ -15,7 +15,7 @@ public class KeyHandler implements KeyListener{
 	}
 	@Override
 	public void keyTyped(KeyEvent e) {
-		if(gp.getGameState() instanceof GameOverState) {
+		if(gp.getGameState() instanceof GameOverState && !nameEntered) {
 			//System.out.println("GETTING KEY TYPED");
 			System.out.println(name + " - " + nameEntered);
 			char c = e.getKeyChar();
@@ -29,6 +29,7 @@ public class KeyHandler implements KeyListener{
 	        	  gp.setCurPlayerName(name);
 	        	  gp.playSFX(5);
 	              setNameEntered(true);
+	              gp.saveData();
 	          }
 	          //gp.repaint();
 		}  

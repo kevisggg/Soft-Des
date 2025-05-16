@@ -11,6 +11,8 @@ public class Main {
 		window.setTitle("BomberMan");
 		GamePanel gp = new GamePanel();
 		window.add(gp);
+		gp.loadConfig();
+		
 		window.pack();
 		window.setLocationRelativeTo(null);
 		window.setVisible(true);

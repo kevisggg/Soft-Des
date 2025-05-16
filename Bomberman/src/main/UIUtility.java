@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -18,6 +19,7 @@ public class UIUtility {
 	//private Graphics2D g2;
 	private Composite originalComposite;
 	public static final String gameFont = "Pixeboy";
+	private Stroke defaultStroke;
 	
 	/*public UIUtility(Graphics2D g2) {
 		this.g2 = g2;
@@ -66,7 +68,7 @@ public class UIUtility {
 	public int getTextX(Graphics2D g2, String text) {
 		length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
 		x = GamePanel.screenWidth/2 - length/2;
-		System.out.println(text +" - x " + x + " length:" + length);
+		//System.out.println(text +" - x " + x + " length:" + length);
 		return x;
 	}
 	
@@ -97,5 +99,17 @@ public class UIUtility {
 	public Font createFont(int size) {
 		Font font = new Font (gameFont, Font.BOLD, size);
 		return font;
+	}
+	
+	/*public void setStroke(Graphics2D g2, int stroke) {
+		g2.setStroke(new BasicStroke(stroke));
+	}*/
+	
+	public void setDefaultStroke(Stroke stroke) {
+		defaultStroke = stroke;
+	}
+	
+	public Stroke getDefaultStroke() {
+		return defaultStroke;
 	}
 }

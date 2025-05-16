@@ -20,7 +20,7 @@ public class Player extends Entity{
 		this.keyH = keyH;
 		name = "Player";
 		collisionBox = new Rectangle(10, 16, 28, 32);
-		lives = 1;
+		lives = 3;
 		speed = 3;
 		invincibleDuration = 180;//3.5 SECONDS
 		blinkInterval = 5;
@@ -30,8 +30,8 @@ public class Player extends Entity{
 	}
 	
 	public void setDefaultVal() {
-		worldX = gp.tileSize;
-		worldY = gp.tileSize;
+		worldX = GamePanel.tileSize;
+		worldY = GamePanel.tileSize;
 		collisionBoxDefaultX = collisionBox.x;
 		collisionBoxDefaultY = collisionBox.y;
 		direction = "down";
@@ -124,11 +124,11 @@ public class Player extends Entity{
 		if(bombCooldown > 12) {
 			if(keyH.getSpace()==true) {
 				//check if bombs available, MAKE METHOD
-				collisionTile = gp.getTileManager().getMapTileNum((worldX + collisionBox.x+5)/gp.tileSize, (worldY+collisionBox.y+10)/gp.tileSize);
+				collisionTile = gp.getTileManager().getMapTileNum((worldX + collisionBox.x+5)/GamePanel.tileSize, (worldY+collisionBox.y+10)/GamePanel.tileSize);
 				if(bombsPlaced < bombCnt && !gp.getTileManager().getTileCollision(collisionTile)) {
 					bombAlreadyPlaced = false;
 					for(Bomb b: gp.getBombs()) {
-						if((b.getX()+ collisionBox.x+5)/gp.tileSize == (worldX + collisionBox.x+5)/gp.tileSize && (b.getY()+ collisionBox.x+10)/gp.tileSize == (worldY+collisionBox.y+10)/gp.tileSize) {
+						if((b.getX()+ collisionBox.x+5)/GamePanel.tileSize == (worldX + collisionBox.x+5)/GamePanel.tileSize && (b.getY()+ collisionBox.x+10)/GamePanel.tileSize == (worldY+collisionBox.y+10)/GamePanel.tileSize) {
 							bombAlreadyPlaced = true;
 							break;
 						}

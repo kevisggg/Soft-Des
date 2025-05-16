@@ -56,16 +56,7 @@ public class KeyHandler implements KeyListener{
 		}
 		if(code == KeyEvent.VK_ESCAPE) {
 			gp.getGameState().pause();
-			/*if(gp.getGameState() == gp.playState) {
-				gp.setPauseState();
-				gp.playSFX(6);
-			}
-			else if(gp.getGameState() == gp.pauseState) {
-				gp.setPlayState();
-				gp.playSFX(6);
-			}*/
 		}
-		
 	}
 
 	@Override

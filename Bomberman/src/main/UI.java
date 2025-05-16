@@ -1,5 +1,6 @@
 package main;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Font;
@@ -30,20 +31,29 @@ public class UI {
 	private final Rectangle BMLBounds = new Rectangle(10, 52, 96, 20);
 	private final Rectangle PMLBounds = new Rectangle(106, 52, 67, 20);
 	private final Rectangle SILBounds = new Rectangle(173, 52, 134, 20);
+	//private final Rectangle BGMCheckBox = new Rectangle(674, 222, 24, 24);
+	private final Rectangle volSFXSlider = new Rectangle(548, 126, 150, 24);
+	private final Rectangle volSFXPlus = new Rectangle(698, 126, 24, 24);
+	private final Rectangle volSFXMinus = new Rectangle(524, 126, 24, 24);
+	private final Rectangle volBGMSlider = new Rectangle(548, 174, 150, 24);
+	private final Rectangle volBGMPlus = new Rectangle(698, 174, 24, 24);
+	private final Rectangle volBGMMinus = new Rectangle(524, 174, 24, 24);
 	private Rectangle hoveredButton;
 	private final String sbackColor = "#CC6600";
 	private final String sfrontColor = "#FFD966";
 	private final String sdefaultBlue = "#3162C3";
+	private final String sdefaultLBlue = "#99CCFF";
 	private final String sdefaultPurple = "#b48cc8";
 	private final String sdarkGray = "#1e1e1e";
 	private final String slightGray = "#323232";
 	
-	private final Color backColor, frontColor, defaultBlue, defaultPurple, darkGray, lightGray;
+	private final Color backColor, frontColor, defaultBlue, defaultLBlue, defaultPurple, darkGray, lightGray;
 	private String text;
 	
 	private int x,y;
 	private int col1X, col2X, col3X, tableStartY, rowHeight, tableMargin;
 	private boolean BMLselect, PMLselect, SILselect;
+	//private boolean BGMCheck = true;
 	
 	
 	public UI(GamePanel gp, MouseHandler mouseH, ScoreHandler scoreH) {
@@ -57,6 +67,7 @@ public class UI {
 		backColor = util.getColor(sbackColor);
 		frontColor = util.getColor(sfrontColor);
 		defaultBlue = util.getColor(sdefaultBlue);
+		defaultLBlue = util.getColor(sdefaultLBlue);
 		defaultPurple = util.getColor(sdefaultPurple);
 		darkGray = util.getColor(sdarkGray);
 		lightGray = util.getColor(slightGray);
@@ -76,23 +87,7 @@ public class UI {
 			e.printStackTrace();
 		}
 	}
-	
-	/*public BufferedImage setupImage(String path, int sizeDiff) {
-		image = null;
-		s = new ImageScaler();
-		try {
-			image = ImageIO.read(getClass().getResourceAsStream(path));
-			image = s.scale(GamePanel.tileSize-sizeDiff, GamePanel.tileSize-sizeDiff, image);
-		}catch(IOException e) {
-			e.printStackTrace();
-		}
-		return image;
-	}*/
-	
-	/*public void resetToggleLeaderboard() {
-		toggleLeaderboard = false;
-		back = false;
-	}*/
+
 	public UIUtility getUIUtil() {
 		return util;
 	}
@@ -106,11 +101,7 @@ public class UI {
 			hoveredButton = exitBounds;
 		}
 		
-		if (hoveredButton != null) {
-            gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        } else {
-        	gp.setCursor(Cursor.getDefaultCursor());
-        }
+		hoverCursor();
 	}
 	
 	public void hoverGameOver(Point p) {
@@ -129,11 +120,7 @@ public class UI {
 				hoveredButton = backBounds;
 			}
 		}
-		if (hoveredButton != null) {
-            gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        } else {
-        	gp.setCursor(Cursor.getDefaultCursor());
-        }
+		hoverCursor();
 	}
 	
 	public void hoverInstructions(Point p) {
@@ -141,11 +128,7 @@ public class UI {
 		if(okBounds.contains(p)) {
 			hoveredButton = okBounds;
 		}
-		if (hoveredButton != null) {
-            gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        } else {
-        	gp.setCursor(Cursor.getDefaultCursor());
-        }
+		hoverCursor();
 	}
 	
 	public void hoverMainLeaderboard(Point p) {
@@ -160,7 +143,29 @@ public class UI {
 			hoveredButton = SILBounds;
 		}
 		
+		hoverCursor();
 		
+	}
+	
+	public void hoverSettings(Point p) {
+		hoveredButton = null;
+		if(backBounds.contains(p)) {
+			hoveredButton = backBounds;
+		} else if(volBGMPlus.contains(p)) {
+			hoveredButton = volBGMPlus;
+		} else if(volBGMMinus.contains(p)) {
+			hoveredButton = volBGMMinus;
+		} else if(volSFXPlus.contains(p)) {
+			hoveredButton = volSFXPlus;
+		} else if(volSFXMinus.contains(p)) {
+			hoveredButton = volSFXMinus;
+		} /*else if(BGMCheckBox.contains(p)) {
+			hoveredButton = BGMCheckBox;
+		}*/
+		hoverCursor();
+	}
+	
+	public void hoverCursor() {
 		if (hoveredButton != null) {
             gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         } else {
@@ -171,6 +176,7 @@ public class UI {
 	public void draw(Graphics2D g2) {
 		this.g2 = g2;
 		util.setComposite(g2.getComposite());
+		util.setDefaultStroke(g2.getStroke());
 		boolean clickedThisFrame = mouseH.getClicked();
 		Point clickPoint = mouseH.getPoint();
 		gp.getGameState().draw(clickedThisFrame, clickPoint);
@@ -332,12 +338,12 @@ public class UI {
 	}
 	
 	public void drawEnterName() {
-		 g2.setFont(menu_50);
+		g2.setFont(menu_50);
         g2.setColor(Color.CYAN);
         g2.setColor(!gp.getNameEntered() ? Color.cyan : Color.white);
         String nameLine = "ENTER NAME: " + gp.getNameInput() + (gp.getNameEntered() ? "" : "_");
         x = util.getTextX(g2, nameLine);
-		 y = GamePanel.screenHeight/3+110;
+		y = GamePanel.screenHeight/3+110;
         g2.drawString(nameLine, x, y);
        // System.out.println("NAME ENTERED: " + gp.getNameEntered());
         
@@ -407,7 +413,7 @@ public class UI {
 			if (returnMenuBounds.contains(clickPoint) && !util.getToggleLeaderboard()) {
 	            System.out.println("RETURN");
 	            gp.playSFX(5);
-	            gp.restartGame();//CHANGE TO EXIT TO MENU
+	            //gp.restartGame();//CHANGE TO EXIT TO MENU
 	            //gp.saveData();
 	        }
 			else if (viewLeaderboardBounds.contains(clickPoint) && !util.getToggleLeaderboard()) {
@@ -427,7 +433,7 @@ public class UI {
 	
 	public void drawWinScreen(boolean clickedThisFrame, Point clickPoint) {
 		util.setBG(g2);
-		g2.setFont(menu_50);
+		g2.setFont(menu_70);
 		text = "LEVEL COMPLETE";
 		x = util.getTextX(g2, text);
 		y = GamePanel.screenHeight/2;
@@ -512,8 +518,7 @@ public class UI {
 	            BMLselect=false;
 				PMLselect=false;
 				SILselect=true;
-			}
-			if (backBounds.contains(clickPoint)) {
+			} else if (backBounds.contains(clickPoint)) {
 	            System.out.println("BACK");
 	            gp.playSFX(5);
 	            BMLselect=false;
@@ -547,7 +552,6 @@ public class UI {
 	}
 
 	private void drawPMLeaderboard() {
-		// TODO Auto-generated method stub
 		BMPlayerLeaderboard p = null;
         
 		for (int i = 0; i < Math.min(20, GamePanel.bml.getPlayersSize()); i++) {
@@ -569,7 +573,6 @@ public class UI {
 	}
 
 	private void drawBMLeaderboard() {
-		// TODO Auto-generated method stub
 		BMPlayerLeaderboard p = null;
         
 		for (int i = 0; i < Math.min(20, GamePanel.bml.getPlayersSize()); i++) {
@@ -588,7 +591,6 @@ public class UI {
 
             y += rowHeight;
         }
-		//System.out.println("drawingBML");
 	}
 	
 	private void drawLeaderboardHeader() {
@@ -599,5 +601,86 @@ public class UI {
         g2.drawString("NAME", col2X, tableStartY + tableMargin);
         g2.drawString("SCORE", col3X, tableStartY + tableMargin);
 	}
+
+	public void drawSettings(boolean clickedThisFrame, Point clickPoint) {
+		g2.setColor(Color.BLACK);
+		g2.fillRect(0, 0, GamePanel.screenWidth, GamePanel.screenHeight);
+		g2.setFont(hud_40);
+		text = "< BACK";
+		g2.setColor(hoveredButton == backBounds ? Color.white : defaultLBlue);
+		g2.drawString(text, backBounds.x, backBounds.y+backBounds.height);
+		
+		text = "SETTINGS";
+		x = util.getTextX(g2, text);
+		y = 10;
+		util.addShadow(g2, 2, text, backColor, frontColor, x, 30);
+		
+		y=150;
+		g2.drawString("SFX Volume:", 70, y);
+		g2.setStroke(new BasicStroke(3));
+		g2.draw(volSFXSlider);
+		g2.fillRect(volSFXSlider.x, volSFXSlider.y, gp.getSFXScale()*30, volSFXSlider.height);
+		g2.drawString("+",volSFXPlus.x+2,volSFXPlus.y+volSFXPlus.height-2);
+		g2.drawString("-",volSFXMinus.x,volSFXMinus.y+volSFXMinus.height-2);
+		//g2.draw(volMinus);
+		y=198;
+		g2.drawString("BGM Volume:", 70, y);
+		g2.draw(volBGMSlider);
+		g2.fillRect(volBGMSlider.x, volBGMSlider.y, gp.getBGMScale()*30, volBGMSlider.height);
+		g2.drawString("+",volBGMPlus.x+2,volBGMPlus.y+volBGMPlus.height-2);
+		g2.drawString("-",volBGMMinus.x,volBGMMinus.y+volBGMMinus.height-2);
+		y=246;
+		/*g2.drawString("Toggle BGM:", 70, y);
+		g2.draw(BGMCheckBox);
+		if(BGMCheck) {
+			g2.fill(BGMCheckBox);
+		}*/
+		
+		if(clickedThisFrame) {
+			//Point point = mouseH.getPoint();
+			/*if (BGMCheckBox.contains(clickPoint)) {
+	            System.out.println("CHECK");
+	            gp.playSFX(5);
+	            if(BGMCheck) {
+	            	BGMCheck = false;
+	            }
+	            else {
+	            	BGMCheck = true;
+	            }
+	            gp.setBGM(BGMCheck);
+	        }*/ if (volSFXPlus.contains(clickPoint)) {
+	            System.out.println("SFXPLUS");
+	            gp.playSFX(5);
+	            gp.adjustSFX(1);
+	            
+	        } else if (volSFXMinus.contains(clickPoint)) {
+	            System.out.println("SFXMINUS");
+	            gp.playSFX(5);
+	            gp.adjustSFX(-1);
+	        } else if (volBGMPlus.contains(clickPoint)) {
+	            System.out.println("BGMPLUS");
+	            gp.playSFX(5);
+	            gp.adjustBGM(1);
+	            
+	        } else if (volBGMMinus.contains(clickPoint)) {
+	            System.out.println("BGMMINUS");
+	            gp.playSFX(5);
+	            gp.adjustBGM(-1);
+	        } else if (backBounds.contains(clickPoint)) {
+	            System.out.println("BACK");
+	            gp.playSFX(5);
+	            gp.saveConfig();
+	            g2.setStroke(util.getDefaultStroke());
+	            gp.setInsState(); // CHANGE TO BACK TO MAIN MENU
+	        }
+			mouseH.resetClick();
+		}
+	}
+
+	/*public boolean getBGM() {
+		// TODO Auto-generated method stub
+		return BGMCheck;
+	}*/
+
 	
 }

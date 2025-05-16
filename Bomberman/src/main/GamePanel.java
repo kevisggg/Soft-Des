@@ -50,8 +50,8 @@ public class GamePanel extends JPanel implements Runnable{
 	private GameStateHandler gamestateH = new GameStateHandler();
 	private CollisionChecker colCheck = new CollisionChecker(this, asset, tileMgr, explosions);
 	private Player player = new Player(this, keyH, colCheck);
-	public UI ui = new UI(this, mouseH, scoreH);
-	
+	private UI ui = new UI(this, mouseH, scoreH);
+	private Config config = new Config(this);
 	private Thread gameThread;
 	
 	public GamePanel() {
@@ -62,7 +62,6 @@ public class GamePanel extends JPanel implements Runnable{
 		this.addMouseMotionListener(mouseH);
 		this.setFocusable(true);
 		loadData();
-		//setInsState();
 		setInsState();
 	}
 	
@@ -80,6 +79,8 @@ public class GamePanel extends JPanel implements Runnable{
 	public PowerUp getObj(int i) {return obj.get(i);}
 	public String getNameInput() {return keyH.getName();}
 	public boolean getNameEntered() {return keyH.getNameEntered();}
+	public int getBGMScale() {return music.getScale();}
+	public int getSFXScale() {return sfx.getScale();}
 	public String getLvl() {
 		String lvl;
 		lvl = String.valueOf(level);
@@ -96,13 +97,22 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	//SETTERS
 	public void setInsState() {gamestateH.setState(new InsState(ui));}
+	public void setSettingsState() {gamestateH.setState(new MainSettingsState(ui));}
 	public void setMainLeaderState() {gamestateH.setState(new MainLeaderboardState(ui));System.out.println("MAINLEADERBOAED");}
-	public void setPlayState() {gamestateH.setState(new PlayState(this, player, colCheck, bombs, explosions, enemies, ui));}
-	public void setPauseState() {gamestateH.setState(new PauseState(this, ui)); pauseMusic();}
 	public void setOverState() {gamestateH.setState(new GameOverState(ui)); stopMusic();}
 	public void setWinState() {gamestateH.setState(new WinState(this, ui));}
 	public void setNameEntered(boolean isEntered) {keyH.setNameEntered(isEntered);}
 	public void setCurPlayerName(String name) {currentPlayer.setName(name); mouseH.resetClick();}
+	//public void setBGM(boolean toggle) {music.toggle(toggle);}
+	public void setBGMScale(int scale) {music.setScale(scale);}
+	public void setSFXScale(int scale) {sfx.setScale(scale);}
+	public void setPlayState() {
+		gamestateH.setState(new PlayState(this, player, colCheck, bombs, explosions, enemies, ui));}
+	public void setPauseState() {
+		gamestateH.setState(new PauseState(this, ui)); 
+		
+			pauseMusic();
+	}
 	public void setObjXY(int x, int y) {
 		obj.getLast().setX(x);
 		obj.getLast().setY(y);		
@@ -113,7 +123,6 @@ public class GamePanel extends JPanel implements Runnable{
 	public void setupGame() {
 		asset.setEnemy();
 		playMusic();
-		//setInsState();
 		setInsState();
 		keyH.setNameEntered(false);
 	}
@@ -226,6 +235,10 @@ public class GamePanel extends JPanel implements Runnable{
 	public void addEnemy(Enemy enemy) {enemies.add(enemy);}
 	public void addObj(PowerUp pu) {obj.add(pu);}
 	public void removeFirstObj() {obj.remove(0);}
+	public void adjustSFX(int adj) {sfx.adjScale(adj);}
+	public void adjustBGM(int adj) {music.adjScale(adj);music.checkVol();}
+	public void saveConfig() {config.saveConfig();}
+	public void loadConfig() {config.loadConfig();}
 	
 	
 	//SOUNDS

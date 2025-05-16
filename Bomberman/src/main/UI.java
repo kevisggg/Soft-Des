@@ -1,8 +1,6 @@
 package main;
 
-import java.awt.AlphaComposite;
 import java.awt.Color;
-import java.awt.Composite;
 import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -18,11 +16,9 @@ public class UI {
 	private MouseHandler mouseH;
 	private ScoreHandler scoreH;
 	private Graphics2D g2;
-	private final float alpha50 = 0.5f;
-	private final float alpha70 = 0.7f;
+	private UIUtility util = new UIUtility();//?
 	private Font menu_70, menu_50, hud_40, hud_20;
-	private BufferedImage life, bomb, PUcap, PUrange, image, ins;
-	private ImageScaler s;
+	private BufferedImage life, bomb, PUcap, PUrange, ins;
 	private final Rectangle resumeBounds = new Rectangle(308, 230, 152, 30);
 	private final Rectangle restartBounds = new Rectangle(295, 280, 178, 30);
 	private final Rectangle returnMenuBounds = new Rectangle(224, 408, 321, 30);
@@ -31,6 +27,9 @@ public class UI {
 	private final Rectangle exitBounds = new Rectangle(333, 330, 102, 30);
 	private final Rectangle okBounds = new Rectangle(356, 500, 55, 25);
 	private final Rectangle backBounds = new Rectangle(10, 10, 104, 20);
+	private final Rectangle BMLBounds = new Rectangle(10, 52, 96, 20);
+	private final Rectangle PMLBounds = new Rectangle(106, 52, 67, 20);
+	private final Rectangle SILBounds = new Rectangle(173, 52, 134, 20);
 	private Rectangle hoveredButton;
 	private final String sbackColor = "#CC6600";
 	private final String sfrontColor = "#FFD966";
@@ -38,37 +37,38 @@ public class UI {
 	private final String sdefaultPurple = "#b48cc8";
 	private final String sdarkGray = "#1e1e1e";
 	private final String slightGray = "#323232";
-	public static final String gameFont = "Pixeboy";
+	
 	private final Color backColor, frontColor, defaultBlue, defaultPurple, darkGray, lightGray;
 	private String text;
-	private Composite originalComposite;
+	
 	private int x,y;
 	private int col1X, col2X, col3X, tableStartY, rowHeight, tableMargin;
-	private boolean toggleLeaderboard = false, back = false;
+	private boolean BMLselect, PMLselect, SILselect;
+	
 	
 	public UI(GamePanel gp, MouseHandler mouseH, ScoreHandler scoreH) {
 		this.gp = gp;
 		this.mouseH = mouseH;
 		this.scoreH = scoreH;
-		menu_70 = createFont(70);
-		menu_50 = createFont(50);
-		hud_40 = createFont(40);
-		hud_20 = createFont(20);
-		backColor = getColor(sbackColor);
-		frontColor = getColor(sfrontColor);
-		defaultBlue = getColor(sdefaultBlue);
-		defaultPurple = getColor(sdefaultPurple);
-		darkGray = getColor(sdarkGray);
-		lightGray = getColor(slightGray);
-		life = setupImage("/objects/life.png", 15);
-		PUcap = setupImage("/objects/PUcapacity.png", 15);
-		PUrange = setupImage("/objects/PUrange.png", 15);
-		bomb = setupImage("/objects/dynamite1.png", 10);
-		col1X = gp.tileSize;
-		col2X = gp.tileSize * 5;
-	    col3X = gp.screenWidth - gp.tileSize * 5;
-	    tableStartY = gp.tileSize/2*3;
-	    rowHeight = gp.tileSize/2;
+		menu_70 = util.createFont(70);
+		menu_50 = util.createFont(50);
+		hud_40 = util.createFont(40);
+		hud_20 = util.createFont(20);
+		backColor = util.getColor(sbackColor);
+		frontColor = util.getColor(sfrontColor);
+		defaultBlue = util.getColor(sdefaultBlue);
+		defaultPurple = util.getColor(sdefaultPurple);
+		darkGray = util.getColor(sdarkGray);
+		lightGray = util.getColor(slightGray);
+		life = util.setupImage("/objects/life.png", 15);
+		PUcap = util.setupImage("/objects/PUcapacity.png", 15);
+		PUrange = util.setupImage("/objects/PUrange.png", 15);
+		bomb = util.setupImage("/objects/dynamite1.png", 10);
+		col1X = GamePanel.tileSize;
+		col2X = GamePanel.tileSize * 5;
+	    col3X = GamePanel.screenWidth - GamePanel.tileSize * 5;
+	    tableStartY = GamePanel.tileSize/2*3;
+	    rowHeight = GamePanel.tileSize/2;
 	    tableMargin = 17;
 		try {
 			ins = ImageIO.read(getClass().getResourceAsStream("/objects/instructions.png"));
@@ -77,23 +77,25 @@ public class UI {
 		}
 	}
 	
-	public BufferedImage setupImage(String path, int sizeDiff) {
+	/*public BufferedImage setupImage(String path, int sizeDiff) {
 		image = null;
 		s = new ImageScaler();
 		try {
 			image = ImageIO.read(getClass().getResourceAsStream(path));
-			image = s.scale(gp.tileSize-sizeDiff, gp.tileSize-sizeDiff, image);
+			image = s.scale(GamePanel.tileSize-sizeDiff, GamePanel.tileSize-sizeDiff, image);
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
 		return image;
-	}
+	}*/
 	
-	public void resetToggleLeaderboard() {
+	/*public void resetToggleLeaderboard() {
 		toggleLeaderboard = false;
 		back = false;
+	}*/
+	public UIUtility getUIUtil() {
+		return util;
 	}
-	
 	public void hoverPause(Point p) {
 		hoveredButton = null;
 		if(resumeBounds.contains(p)) {
@@ -114,7 +116,7 @@ public class UI {
 	public void hoverGameOver(Point p) {
 		hoveredButton = null;
 		
-		if(toggleLeaderboard == false) {
+		if(!util.getToggleLeaderboard()) {
 			if(restartGameOverBounds.contains(p)) {
 				hoveredButton = restartGameOverBounds;
 			} else if(viewLeaderboardBounds.contains(p)) {
@@ -132,12 +134,10 @@ public class UI {
         } else {
         	gp.setCursor(Cursor.getDefaultCursor());
         }
-		
 	}
 	
 	public void hoverInstructions(Point p) {
 		hoveredButton = null;
-		//System.out.println("CHECKING IN INS");
 		if(okBounds.contains(p)) {
 			hoveredButton = okBounds;
 		}
@@ -148,39 +148,33 @@ public class UI {
         }
 	}
 	
-	public Font createFont(int size) {
-		Font font = new Font (gameFont, Font.BOLD, size);
-		return font;
+	public void hoverMainLeaderboard(Point p) {
+		hoveredButton = null;
+		if(backBounds.contains(p)) {
+			hoveredButton = backBounds;
+		} else if(BMLBounds.contains(p)) {
+			hoveredButton = BMLBounds;
+		} else if(PMLBounds.contains(p)) {
+			hoveredButton = PMLBounds;
+		} else if(SILBounds.contains(p)) {
+			hoveredButton = SILBounds;
+		}
+		
+		
+		if (hoveredButton != null) {
+            gp.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        } else {
+        	gp.setCursor(Cursor.getDefaultCursor());
+        }
 	}
 	
 	public void draw(Graphics2D g2) {
 		this.g2 = g2;
-		this.originalComposite = g2.getComposite();
+		util.setComposite(g2.getComposite());
 		boolean clickedThisFrame = mouseH.getClicked();
 		Point clickPoint = mouseH.getPoint();
 		gp.getGameState().draw(clickedThisFrame, clickPoint);
-		//returnToMenu(clickedThisFrame, clickPoint);
-	}
-	
-	public void setTextBG(int recScreenX, int recScreenY, int width, int height) {
-		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha70));
-		g2.setColor(Color.black);
-		g2.fillRect(recScreenX, recScreenY, width, height);
-		g2.setComposite(originalComposite);
-	}
-	
-	public void setBG() {
-		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha50));
-		g2.setColor(Color.black);
-		g2.fillRect(0, 0, gp.screenWidth, gp.screenHeight);
-		g2.setComposite(originalComposite);
-	}
-	
-	public void addShadow(int indent, String text, Color colorBack, Color colorFront, int x, int y) {
-		g2.setColor(colorBack);
-		g2.drawString(text, x+indent, y+indent);
-		g2.setColor(colorFront);
-		g2.drawString(text, x, y);
+		//System.out.println(gp.getGameState());
 	}
 	
 	public void drawHUD() {
@@ -191,20 +185,20 @@ public class UI {
 	}
 	
 	public void drawLife() {
-		setTextBG(5, 5, gp.tileSize*6, 36);
+		util.setTextBG(g2, 5, 5, GamePanel.tileSize*6, 36);
 		g2.setColor(defaultBlue);
 		g2.setFont(hud_40);
 		g2.drawString("Lives:", 10, 34);
-		x = gp.tileSize*3;
+		x = GamePanel.tileSize*3;
 		y = 5;
 		for(int i=0; i<gp.getPlayer().getLives(); i++) {
 			g2.drawImage(life, x, y, null);
-			x += gp.tileSize;
+			x += GamePanel.tileSize;
 		}
 	}
 	
 	public void drawLevel() {
-		setTextBG(571, 535, gp.tileSize*4, 36);
+		util.setTextBG(g2, 571, 535, GamePanel.tileSize*4, 36);
 		g2.setColor(defaultBlue);
 		g2.setFont(hud_40);
 		g2.drawString("Level:", 576, 564);
@@ -212,7 +206,7 @@ public class UI {
 	}
 	
 	public void drawScore() {
-		setTextBG(379, 5, gp.tileSize*8, 36);
+		util.setTextBG(g2, 379, 5, GamePanel.tileSize*8, 36);
 		g2.setColor(defaultBlue);
 		g2.setFont(hud_40);
 		g2.drawString("Score:", 384, 34);
@@ -220,31 +214,29 @@ public class UI {
 	}
 	
 	public void drawBPUCounter() {
-		setTextBG(gp.tileSize-5, 535, gp.tileSize*3+40, 36);
+		util.setTextBG(g2, GamePanel.tileSize-5, 535, GamePanel.tileSize*3+40, 36);
 		g2.setFont(hud_20);
 		g2.setColor(Color.WHITE);
-		g2.drawImage(bomb, gp.tileSize, 535, null);
-		g2.drawString(gp.getPlayer().getBombsAvail()+"x", gp.tileSize+20, 551);
-		g2.drawImage(PUrange, gp.tileSize*2+10, 536, null);
-		g2.drawString(gp.getPlayer().getPURadius()+"x", gp.tileSize*2+30, 551);
-		g2.drawImage(PUcap, gp.tileSize*3+20, 536, null);
-		g2.drawString(gp.getPlayer().getPUcap()+"x", gp.tileSize*3+40, 551);
+		g2.drawImage(bomb, GamePanel.tileSize, 535, null);
+		g2.drawString(gp.getPlayer().getBombsAvail()+"x", GamePanel.tileSize+20, 551);
+		g2.drawImage(PUrange, GamePanel.tileSize*2+10, 536, null);
+		g2.drawString(gp.getPlayer().getPURadius()+"x", GamePanel.tileSize*2+30, 551);
+		g2.drawImage(PUcap, GamePanel.tileSize*3+20, 536, null);
+		g2.drawString(gp.getPlayer().getPUcap()+"x", GamePanel.tileSize*3+40, 551);
 	}
 	
 	public void drawInstruction(boolean clickedThisFrame, Point clickPoint) {
-		setBG();
+		util.setBG(g2);
 		g2.drawImage(ins, 0, 0, null);
 		g2.setColor(Color.white);
 		g2.setFont(menu_50);
 		text = "OK";
-		x = getTextX(text);
+		x = util.getTextX(g2, text);
 		y = okBounds.y;
 		g2.setColor(hoveredButton == okBounds ? Color.cyan : Color.white);
-		//addShadow(3, text, backColor, col, x, y+okBounds.height);
 		g2.drawString(text, x, y+okBounds.height);
 		//g2.draw(okBounds);
 		if(clickedThisFrame) {
-			Point p = mouseH.getPoint();
 			if (okBounds.contains(clickPoint)) {
 	            gp.playSFX(5);
 	            gp.setPlayState();
@@ -254,42 +246,41 @@ public class UI {
 	}
 	
 	public void drawPauseScreen(boolean clickedThisFrame, Point clickPoint) {
-		setBG();
+		util.setBG(g2);
 		g2.setFont(menu_70);
 		text = "PAUSED";
-		x = getTextX(text);
-		y = gp.screenHeight/3;
-		addShadow(5, text, backColor, frontColor, x, y);
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/3;
+		util.addShadow(g2, 5, text, backColor, frontColor, x, y);
 		
 		g2.setFont(menu_50);
 		text = "RESUME";
-		x = getTextX(text);
+		x = util.getTextX(g2, text);
 		g2.setColor(hoveredButton == resumeBounds ? Color.cyan : Color.white);
 		g2.drawString("RESUME", resumeBounds.x, resumeBounds.y+resumeBounds.height);
 		text = "RESTART";
-		x = getTextX(text);
+		x = util.getTextX(g2, text);
 		g2.setColor(hoveredButton == restartBounds ? Color.cyan : Color.white);
 		g2.drawString("RESTART", restartBounds.x, restartBounds.y+restartBounds.height);
 		text = "EXIT";
-		x = getTextX(text);
+		x = util.getTextX(g2, text);
 		g2.setColor(hoveredButton == exitBounds ? Color.cyan : Color.white);
 		g2.drawString("EXIT", exitBounds.x, exitBounds.y+exitBounds.height);
 		//g2.draw(resumeBounds);
 		//g2.draw(restartBounds);
 		//g2.draw(exitBounds);
 		if(mouseH.getClicked()) {
-			Point p = mouseH.getPoint();
-			if (resumeBounds.contains(p)) {
+			if (resumeBounds.contains(clickPoint)) {
 	            System.out.println("RESUME");
 	            gp.playSFX(5);
 	            gp.playMusic();
 	            gp.setPlayState();
-	        } else if (restartBounds.contains(p)) {
+	        } else if (restartBounds.contains(clickPoint)) {
 	            System.out.println("RESTART");
 	            gp.playSFX(5);
 	            gp.restartGame();
 	        }
-			else if (exitBounds.contains(p)) {
+			else if (exitBounds.contains(clickPoint)) {
 				System.out.println("EXIT TO MENU");
 				gp.playSFX(5);
 				//insert exit to menu
@@ -300,27 +291,27 @@ public class UI {
 	
 	public void drawGameoverScreen(boolean clickedThisFrame, Point clickPoint) {
 		
-		setBG();
+		util.setBG(g2);
 		
 		//GAME OVER TITLE
 		g2.setFont(menu_70);
 		text = "GAME OVER";
-		x = getTextX(text);
-		y = gp.screenHeight/3;
-		addShadow(5, text, backColor, frontColor, x, y);
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/3;
+		util.addShadow(g2, 5, text, backColor, frontColor, x, y);
 		g2.setFont(menu_50);
 		
 		//SCORE
 		text = scoreH.out();
-		x = getTextX(text);
-		y = gp.screenHeight/3+50;
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/3+50;
 		g2.setColor(Color.white);
 		g2.drawString(text, x, y);
 		
 		//RANK
 		text = "RANK: "+gp.getCurPlayerRank();
-		x = getTextX(text);
-		y = gp.screenHeight/3+80;
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/3+80;
 		g2.setColor(Color.white);
 		g2.drawString(text, x, y);
 		
@@ -329,13 +320,13 @@ public class UI {
         //DIALOG BOX
 		if(!gp.getCurPlayerRank().equals("-")) {//doesnt require username if player not ranked
 			drawEnterName();
-			if(gp.getNameEntered() && back == false) {
+			if(gp.getNameEntered() && !util.getBack()) {
 		        //System.out.println("SAVING TOGGLE");
 		       	 //gp.saveData();
-		       	 toggleLeaderboard = true;
+		       	 util.setToggleLeaderboard(true);
 		        }
 		}
-		if(toggleLeaderboard==true) {
+		if(util.getToggleLeaderboard()) {
 			drawLeaderboard(clickedThisFrame, clickPoint);
 		}
 	}
@@ -345,8 +336,8 @@ public class UI {
         g2.setColor(Color.CYAN);
         g2.setColor(!gp.getNameEntered() ? Color.cyan : Color.white);
         String nameLine = "ENTER NAME: " + gp.getNameInput() + (gp.getNameEntered() ? "" : "_");
-        x = getTextX(nameLine);
-		 y = gp.screenHeight/3+110;
+        x = util.getTextX(g2, nameLine);
+		 y = GamePanel.screenHeight/3+110;
         g2.drawString(nameLine, x, y);
        // System.out.println("NAME ENTERED: " + gp.getNameEntered());
         
@@ -355,57 +346,34 @@ public class UI {
 	public void drawLeaderboard(boolean clickedThisFrame, Point clickPoint) {
 		//TABLE BACKGROUND
 		g2.setColor(Color.DARK_GRAY);
-		g2.fillRect(0, 0, gp.screenWidth, gp.screenHeight);
+		g2.fillRect(0, 0, GamePanel.screenWidth, GamePanel.screenHeight);
 		//BACK and LEADERBOARD text
-		g2.setColor(Color.white);
+		//g2.setColor(Color.white);
 		//g2.draw(backBounds);
+		
+		// DRAW BACK BUTTON AND LEADERBOARD HEADER
 		g2.setFont(hud_40);
 		text = "< BACK";
 		g2.setColor(hoveredButton == backBounds ? Color.cyan : Color.white);
-		g2.drawString(text, backBounds.x, backBounds.y+backBounds.height);
+		g2.drawString(text, backBounds.x, backBounds.y+backBounds.height);	
 		text = "LEADERBOARD";
-		x = getTextX(text);
+		x = util.getTextX(g2, text);
 		y = 10;
-		addShadow(2, text, backColor, frontColor, x, 30);
+		util.addShadow(g2, 2, text, backColor, frontColor, x, 30);
 		y = tableStartY + rowHeight;
-		
-		
-		
-		g2.setColor(defaultPurple);
-		g2.fillRect(0, tableStartY, gp.screenWidth, rowHeight);
 		g2.setFont(hud_20);
-		g2.setColor(Color.BLACK);
 		g2.setFont(g2.getFont().deriveFont(Font.PLAIN));
-        g2.drawString("RANK", col1X, tableStartY + tableMargin);
-        g2.drawString("NAME", col2X, tableStartY + tableMargin);
-        g2.drawString("SCORE", col3X, tableStartY + tableMargin);
-        BMPlayerLeaderboard p = null;
-        
-		for (int i = 0; i < Math.min(20, GamePanel.bml.getPlayersSize()); i++) {
-            p = GamePanel.bml.getPlayer(i);
-
-            // Alternate row colors
-            if (i % 2 == 0) g2.setColor(darkGray);
-            else g2.setColor(lightGray);
-            g2.fillRect(0, y, gp.screenWidth, rowHeight);
-
-            // Text
-            g2.setColor(Color.LIGHT_GRAY);
-            g2.drawString(String.valueOf(p.getRank()), col1X, y + tableMargin);
-            g2.drawString(p.getName(), col2X, y + tableMargin);
-            g2.drawString(String.valueOf(p.getScore()), col3X, y + tableMargin);
-
-            y += rowHeight;
-        }
+		drawLeaderboardHeader();
+        drawBMLeaderboard();
 		//System.out.println("CLICK: " + mouseH.getClicked());
 		if(clickedThisFrame) {
 			System.out.println("POINT");
-			Point point = mouseH.getPoint();
+			//Point point = mouseH.getPoint();
 			if (backBounds.contains(clickPoint)) {
 	            System.out.println("BACK");
 	            gp.playSFX(5);
-	            toggleLeaderboard = false;//CHANGE TO EXIT TO MENU
-	            back = true;
+	            util.setToggleLeaderboard(false);//CHANGE TO EXIT TO MENU
+	            util.setBack(true);
 	            //gp.saveData();
 	        }
 			mouseH.resetClick();
@@ -416,42 +384,38 @@ public class UI {
 	private void gameOverButtons(boolean clickedThisFrame, Point clickPoint) {
 		g2.setFont(menu_50);
 		text = "RESTART";
-		x = getTextX(text);
-		y = gp.screenHeight/2+60+restartGameOverBounds.height;
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/2+60+restartGameOverBounds.height;
 		//g2.draw(restartGameOverBounds);
 		g2.setColor(hoveredButton == restartGameOverBounds ? Color.cyan : Color.white);
 		g2.drawString(text, x, y);
-		//g2.setColor(Color.white);
 		
 		text = "VIEW LEADERBOARD";
-		x = getTextX(text);
-		y = gp.screenHeight/2+90+viewLeaderboardBounds.height;
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/2+90+viewLeaderboardBounds.height;
 		//g2.draw(viewLeaderboardBounds);
 		g2.setColor(hoveredButton == viewLeaderboardBounds ? Color.cyan : Color.white);
 		g2.drawString(text, x, y);
-		//g2.setColor(Color.white);
 		
 		text = "RETURN TO MENU";
-		x = getTextX(text);
-		y = gp.screenHeight/2+120+returnMenuBounds.height;
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/2+120+returnMenuBounds.height;
 		//g2.draw(returnMenuBounds);
 		g2.setColor(hoveredButton == returnMenuBounds ? Color.cyan : Color.white);
 		g2.drawString(text, x, y);
-		//g2.setColor(Color.white);
 		if(clickedThisFrame && (gp.getNameEntered() || gp.getCurPlayerRank().equals("-"))) {
-			Point p = mouseH.getPoint();
-			if (returnMenuBounds.contains(clickPoint)) {
+			if (returnMenuBounds.contains(clickPoint) && !util.getToggleLeaderboard()) {
 	            System.out.println("RETURN");
 	            gp.playSFX(5);
 	            gp.restartGame();//CHANGE TO EXIT TO MENU
 	            //gp.saveData();
 	        }
-			else if (viewLeaderboardBounds.contains(clickPoint)) {
+			else if (viewLeaderboardBounds.contains(clickPoint) && !util.getToggleLeaderboard()) {
 	            System.out.println("leaderboard");
 	            gp.playSFX(5);
-	            toggleLeaderboard = true;
+	            util.setToggleLeaderboard(true);
 	        }
-			else if (restartGameOverBounds.contains(clickPoint)) {
+			else if (restartGameOverBounds.contains(clickPoint) && !util.getToggleLeaderboard()) {
 				System.out.println("RESTART GO");
 				gp.playSFX(5);
 				gp.restartGame();
@@ -461,55 +425,179 @@ public class UI {
 		}
 	}
 	
-	//////////UNFINISHED METHOD
-	public void restartGame(boolean clickedThisFrame, Point clickPoint) {
-		text = "RESTART GAME";
-		x = getTextX(text);
-		y = gp.screenHeight/2+120+returnMenuBounds.height;
-		//g2.draw(returnMenuBounds);
-		g2.drawString("RETURN TO MENU", x, y);
-		g2.setColor(Color.white);
-		if(mouseH.getClicked() && gp.getNameEntered()) {
-			Point p = mouseH.getPoint();
-			if (returnMenuBounds.contains(p)) {
-	            System.out.println("RETURN");
-	            gp.playSFX(5);
-	            gp.restartGame();//CHANGE TO EXIT TO MENU
-	            //gp.saveData();
-	        }
-			mouseH.resetClick();
-		}
-	}
-	
-	/*
-	 * public void viewLeaderboard(){}
-	 */
-	
 	public void drawWinScreen(boolean clickedThisFrame, Point clickPoint) {
-		setBG();
+		util.setBG(g2);
 		g2.setFont(menu_50);
 		text = "LEVEL COMPLETE";
-		x = getTextX(text);
-		y = gp.screenHeight/2;
-		addShadow(5, text, backColor, frontColor, x, y);
+		x = util.getTextX(g2, text);
+		y = GamePanel.screenHeight/2;
+		util.addShadow(g2, 5, text, backColor, frontColor, x, y);
 		
 		g2.setFont(hud_40);
 		text="Loading Next Level...";
-		x = getTextX(text);
-		y = (gp.screenHeight/2)+50;
+		x = util.getTextX(g2, text);
+		y = (GamePanel.screenHeight/2)+50;
 		g2.setColor(Color.white);
 		g2.drawString(text, x, y);
 	}
 	
-	public int getTextX(String text) {
-		int length = (int)g2.getFontMetrics().getStringBounds(text, g2).getWidth();
-		x = gp.screenWidth/2 - length/2;
-		//System.out.println(text +" - x " + x + " length:" + length);
-		return x;
+	public void drawMainLeaderboard(boolean clickedThisFrame, Point clickPoint) {
+		g2.setColor(Color.DARK_GRAY);
+		g2.fillRect(0, 0, GamePanel.screenWidth, GamePanel.screenHeight);
+		g2.setFont(hud_40);
+		text = "< BACK";
+		g2.setColor(hoveredButton == backBounds ? Color.cyan : Color.white);
+		g2.drawString(text, backBounds.x, backBounds.y+backBounds.height);
+		
+		text = "LEADERBOARD";
+		x = util.getTextX(g2, text);
+		y = 10;
+		util.addShadow(g2, 2, text, backColor, frontColor, x, 30);
+		y = tableStartY + rowHeight;
+		if(BMLselect) {g2.setColor(defaultPurple);} else { g2.setColor(hoveredButton == BMLBounds ? defaultPurple : Color.black);}
+		g2.fillRect(BMLBounds.x, BMLBounds.y, BMLBounds.width, BMLBounds.height);
+		if(PMLselect) {g2.setColor(defaultPurple);} else { g2.setColor(hoveredButton == PMLBounds ? defaultPurple : Color.black);}
+		g2.fillRect(PMLBounds.x, PMLBounds.y, PMLBounds.width, PMLBounds.height);
+		if(SILselect) {g2.setColor(defaultPurple);} else { g2.setColor(hoveredButton == SILBounds ? defaultPurple : Color.black);}
+		g2.fillRect(SILBounds.x, SILBounds.y, SILBounds.width, SILBounds.height);
+		g2.setColor(Color.white);
+		g2.draw(BMLBounds);
+		g2.draw(PMLBounds);
+		g2.draw(SILBounds);
+		g2.setFont(hud_20);
+		g2.setFont(g2.getFont().deriveFont(Font.PLAIN));
+		
+		text = "BomberMan";
+		x = util.getTextX(g2, text);
+		g2.drawString(text, BMLBounds.x+5, BMLBounds.y+BMLBounds.height-5);
+		text = "PacMan";
+		g2.drawString(text, PMLBounds.x+5, PMLBounds.y+PMLBounds.height-5);
+		x = util.getTextX(g2, text);
+		text = "SpaceInvaders";
+		g2.drawString(text, SILBounds.x+5, SILBounds.y+SILBounds.height-5);
+		x = util.getTextX(g2, text);
+		if(!BMLselect && !PMLselect && !SILselect) {
+			g2.setColor(darkGray);
+			g2.fillRect(0, tableStartY, GamePanel.screenWidth, rowHeight*21);
+			text="No Game Leaderboard Selected";
+			x=util.getTextX(g2, text);
+			g2.setColor(Color.white);
+			g2.drawString(text, x, GamePanel.screenHeight/2);
+		}
+		else {
+			drawLeaderboardHeader();
+			if (BMLselect) drawBMLeaderboard();
+	        if (PMLselect) drawPMLeaderboard();
+	        if (SILselect) drawSILeaderboard();
+		}
+
+		if(clickedThisFrame) {
+			if (BMLBounds.contains(clickPoint)) {
+	            System.out.println("RETURN");
+	            gp.playSFX(5);
+	            SILselect=false;
+	            PMLselect=false;
+	            BMLselect=true;
+	        }
+			else if (PMLBounds.contains(clickPoint)) {
+	            System.out.println("leaderboard");
+	            gp.playSFX(5);
+	            SILselect=false;
+	            BMLselect=false;
+	            PMLselect=true;
+	        }
+			else if (SILBounds.contains(clickPoint)) {
+				System.out.println("RESTART GO");
+				gp.playSFX(5);
+	            BMLselect=false;
+				PMLselect=false;
+				SILselect=true;
+			}
+			if (backBounds.contains(clickPoint)) {
+	            System.out.println("BACK");
+	            gp.playSFX(5);
+	            BMLselect=false;
+				PMLselect=false;
+				SILselect=false;
+	            // ADD BACK TO MAIN MENU
+	        }
+			mouseH.resetClick();
+		}
+	}
+
+	private void drawSILeaderboard() {
+		// TODO Auto-generated method stub
+		BMPlayerLeaderboard p = null;
+		for (int i = 0; i < Math.min(20, GamePanel.bml.getPlayersSize()); i++) {
+            p = GamePanel.bml.getPlayer(i);
+
+            // Alternate row colors
+            if (i % 2 == 0) g2.setColor(darkGray);
+            else g2.setColor(lightGray);
+            g2.fillRect(0, y, GamePanel.screenWidth, rowHeight);
+
+            // Text
+            g2.setColor(Color.LIGHT_GRAY);
+            g2.drawString(String.valueOf(p.getRank())+"SI", col1X, y + tableMargin);
+            g2.drawString(p.getName(), col2X, y + tableMargin);
+            g2.drawString(String.valueOf(p.getScore()), col3X, y + tableMargin);
+
+            y += rowHeight;
+        }
+	}
+
+	private void drawPMLeaderboard() {
+		// TODO Auto-generated method stub
+		BMPlayerLeaderboard p = null;
+        
+		for (int i = 0; i < Math.min(20, GamePanel.bml.getPlayersSize()); i++) {
+            p = GamePanel.bml.getPlayer(i);
+
+            // Alternate row colors
+            if (i % 2 == 0) g2.setColor(darkGray);
+            else g2.setColor(lightGray);
+            g2.fillRect(0, y, GamePanel.screenWidth, rowHeight);
+
+            // Text
+            g2.setColor(Color.LIGHT_GRAY);
+            g2.drawString(String.valueOf(p.getRank())+"PM", col1X, y + tableMargin);
+            g2.drawString(p.getName(), col2X, y + tableMargin);
+            g2.drawString(String.valueOf(p.getScore()), col3X, y + tableMargin);
+
+            y += rowHeight;
+        }
+	}
+
+	private void drawBMLeaderboard() {
+		// TODO Auto-generated method stub
+		BMPlayerLeaderboard p = null;
+        
+		for (int i = 0; i < Math.min(20, GamePanel.bml.getPlayersSize()); i++) {
+            p = GamePanel.bml.getPlayer(i);
+
+            // Alternate row colors
+            if (i % 2 == 0) g2.setColor(darkGray);
+            else g2.setColor(lightGray);
+            g2.fillRect(0, y, GamePanel.screenWidth, rowHeight);
+
+            // Text
+            g2.setColor(Color.LIGHT_GRAY);
+            g2.drawString(String.valueOf(p.getRank()), col1X, y + tableMargin);
+            g2.drawString(p.getName(), col2X, y + tableMargin);
+            g2.drawString(String.valueOf(p.getScore()), col3X, y + tableMargin);
+
+            y += rowHeight;
+        }
+		//System.out.println("drawingBML");
 	}
 	
-	public Color getColor(String hex) {
-		Color color = Color.decode(hex);
-		return color;
+	private void drawLeaderboardHeader() {
+		g2.setColor(defaultPurple);
+		g2.fillRect(0, tableStartY, GamePanel.screenWidth, rowHeight);
+		g2.setColor(Color.black);
+		g2.drawString("RANK", col1X, tableStartY + tableMargin);
+        g2.drawString("NAME", col2X, tableStartY + tableMargin);
+        g2.drawString("SCORE", col3X, tableStartY + tableMargin);
 	}
+	
 }

@@ -23,13 +23,13 @@ import tile.TileManager;
 
 public class GamePanel extends JPanel implements Runnable{
 	//SCREEN SETTINGS
-	private final int ogTileSize = 16;
-	private final int scale = 3;
-	public final int tileSize = ogTileSize * scale;
-	public final int maxScreenCol = 16;
-	public final int maxScreenRow = 12;
-	public final int screenWidth = tileSize * maxScreenCol; //768
-	public final int screenHeight = tileSize * maxScreenRow; //576
+	private static final int ogTileSize = 16;
+	private static final int scale = 3;
+	public static final int tileSize = ogTileSize * scale;
+	public static final int maxScreenCol = 16;
+	public static final int maxScreenRow = 12;
+	public static final int screenWidth = tileSize * maxScreenCol; //768
+	public static final int screenHeight = tileSize * maxScreenRow; //576
 	public final int FPS = 60;
 	//SET LEVEL
 	private int level=1;
@@ -62,6 +62,7 @@ public class GamePanel extends JPanel implements Runnable{
 		this.addMouseMotionListener(mouseH);
 		this.setFocusable(true);
 		loadData();
+		//setInsState();
 		setInsState();
 	}
 	
@@ -95,6 +96,7 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	//SETTERS
 	public void setInsState() {gamestateH.setState(new InsState(ui));}
+	public void setMainLeaderState() {gamestateH.setState(new MainLeaderboardState(ui));System.out.println("MAINLEADERBOAED");}
 	public void setPlayState() {gamestateH.setState(new PlayState(this, player, colCheck, bombs, explosions, enemies, ui));}
 	public void setPauseState() {gamestateH.setState(new PauseState(this, ui)); pauseMusic();}
 	public void setOverState() {gamestateH.setState(new GameOverState(ui)); stopMusic();}
@@ -111,6 +113,7 @@ public class GamePanel extends JPanel implements Runnable{
 	public void setupGame() {
 		asset.setEnemy();
 		playMusic();
+		//setInsState();
 		setInsState();
 		keyH.setNameEntered(false);
 	}
@@ -137,7 +140,7 @@ public class GamePanel extends JPanel implements Runnable{
 		stopMusic();
 		playMusic();
 		scoreH.resetScore();
-		ui.resetToggleLeaderboard();
+		ui.getUIUtil().resetToggleLeaderboard();
 	    level = 1;
 	    setNameEntered(false);
 	    keyH.setName("");

@@ -19,17 +19,21 @@ public class MouseHandler implements MouseListener, MouseMotionListener{
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if(!(gp.getGameState() instanceof PlayState)) {
+		/*if(!(gp.getGameState() instanceof PlayState)) {
 			p = e.getPoint();
 			clicked = true;
 			System.out.println(p);
-		}
+		}*/
 	}
 
 	@Override
 	public void mousePressed(MouseEvent e) {
 		// TODO Auto-generated method stub
-		
+		if(!(gp.getGameState() instanceof PlayState)) {
+			p = e.getPoint();
+			clicked = true;
+			System.out.println(p);
+		}
 	}
 
 	@Override

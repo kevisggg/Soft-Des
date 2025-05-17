@@ -1,1 +1,2 @@
-
+if all uses tilemanager --> TileManagerInterface, Tile in core
+if AssetSetter similar methods --> AssetSetterInterface

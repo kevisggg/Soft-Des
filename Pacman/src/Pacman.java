@@ -601,7 +601,6 @@ public class Pacman extends JPanel implements ActionListener, KeyListener, Mouse
         if (ghost.state == GhostState.FRIGHTENED) return scaredGhostImage;
         if (ghost.state == GhostState.EYES) return eyesImage; 
         
-        // Return normal colored sprite for HOUSE and NORMAL states
         switch (ghost.personality) {
             case BLINKY: return redGhostImage;
             case PINKY: return pinkGhostImage;
@@ -820,6 +819,7 @@ public class Pacman extends JPanel implements ActionListener, KeyListener, Mouse
                     
                 case EYES:
                     if (currentTime > ghost.stateTimer) {
+                        // Directly teleport to house when timer expires
                         Point houseTarget = getGhostHouseTarget();
                         ghost.state = GhostState.HOUSE;
                         ghost.stateTimer = currentTime + 1000; // 1 second in house
@@ -834,7 +834,6 @@ public class Pacman extends JPanel implements ActionListener, KeyListener, Mouse
                         ghost.state = GhostState.NORMAL;
                         ghost.image = getGhostImage(ghost);
                     }
-                    // Ghosts in HOUSE state remain dangerous
                     break;
 
                 case NORMAL:
@@ -843,10 +842,12 @@ public class Pacman extends JPanel implements ActionListener, KeyListener, Mouse
             }
         }
         
-        // Update global frightened state
-        if (ghostsScared && !anyGhostStillFrightened) {
-            ghostsScared = false;
-            soundManager.stopGhostScared();
+        // Update global frightened state and sound
+        if (ghostsScared) {
+            if (!anyGhostStillFrightened) {
+                ghostsScared = false;
+                soundManager.stopGhostScared();
+            }
         }
     }
         
@@ -1599,24 +1600,24 @@ public class Pacman extends JPanel implements ActionListener, KeyListener, Mouse
     private void checkGhostCollisions() {
         for (Block ghost : ghosts) {
             if (collision(pacman, ghost)) {
-                // Only allow ghost eating when ghost is FRIGHTENED
                 if (ghost.state == GhostState.FRIGHTENED) {
+                    // Play the eat fruit sound when eating a frightened ghost
                     soundManager.playEatFruit();
+                    
                     ghost.state = GhostState.EYES;
                     ghost.stateTimer = System.currentTimeMillis() + 2000;
                     ghost.image = eyesImage;
                     ghost.velocityX = 0;
                     ghost.velocityY = 0;
                     score += 200;
-                } 
-                // For all other states (NORMAL, HOUSE, EYES), Pac-Man dies
-                else if (!isRespawning) {
+                } else if (ghost.state == GhostState.NORMAL && !isRespawning) {
                     lives--;
                     soundManager.playDeath();
                     
                     if (lives <= 0) {
                         gameOver = true;
                     } else {
+                        // Start respawn delay instead of immediately resetting
                         isRespawning = true;
                         respawnTimer = System.currentTimeMillis() + RESPAWN_DELAY;
                     }
@@ -1641,8 +1642,6 @@ public class Pacman extends JPanel implements ActionListener, KeyListener, Mouse
             ghost.reset();
             ghost.state = GhostState.HOUSE;
             ghost.stateTimer = System.currentTimeMillis() + 2000 + (1000 * ghost.personality);
-            // Ghosts in HOUSE state are still dangerous
-            ghost.image = getGhostImage(ghost); // Show their normal colored sprite
         }
 
         // Set shorter delay for reset

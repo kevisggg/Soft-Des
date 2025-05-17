@@ -2,20 +2,13 @@ package core;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-//import javax.swing.*;
-//import java.awt.event.ActionEvent;
-//import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
-import javax.swing.JPanel;
 
 public class MainMenuPanel extends AbstractGamePanel implements Runnable{
-	//private GameStateHandler gamestateH;
-	//private UI ui;
 	private Thread gameThread;
 	public final int FPS = 60;
 	private MainWindow mainWindow;
-	private Config config = new Config(this);
+	private Config config = Config.getInstance(this);
     public MainMenuPanel(MainWindow window) {
     	this.mainWindow = window;
         JButton bombermanButton = new JButton("Play Bomberman");

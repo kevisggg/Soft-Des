@@ -9,8 +9,8 @@ import javax.imageio.ImageIO;
 
 import bomberman.main.BMCollisionChecker;
 import bomberman.main.BomberManGamePanel;
-import bomberman.main.ImageScaler;
 import core.EntityInterface;
+import core.ImageScaler;
 
 //ABSTRACT store variables used in player npc classes
 public class BMEntity implements EntityInterface {
@@ -100,7 +100,7 @@ public class BMEntity implements EntityInterface {
 		ImageScaler s = new ImageScaler();
 		try {
 			image = ImageIO.read(getClass().getResourceAsStream(path));
-			image = s.scale(gp.tileSize, gp.tileSize, image);
+			image = s.scale(BomberManGamePanel.tileSize, BomberManGamePanel.tileSize, image);
 		}catch(IOException e) {
 			e.printStackTrace();
 		}
@@ -144,7 +144,7 @@ public class BMEntity implements EntityInterface {
 			}
 			break;
 		}
-		g2.drawImage(image, worldX, worldY, gp.tileSize, gp.tileSize, null);
+		g2.drawImage(image, worldX, worldY, BomberManGamePanel.tileSize, BomberManGamePanel.tileSize, null);
 	}
 	
 }

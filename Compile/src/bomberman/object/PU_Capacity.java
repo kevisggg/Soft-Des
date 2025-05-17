@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-public class PU_Capacity extends PowerUp{
+public class PU_Capacity extends BMPowerUp{
 	
 	public PU_Capacity() {
 		

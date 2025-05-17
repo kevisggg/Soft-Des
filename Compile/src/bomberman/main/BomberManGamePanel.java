@@ -1,37 +1,24 @@
 package bomberman.main;
-//import java.awt.Color;
 import java.awt.Dimension;
-//import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-//import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-//import java.io.OutputStream;
 import java.util.ArrayList;
-import javax.swing.JPanel;
 import bomberman.object.Bomb;
-import bomberman.object.PowerUp;
-import bomberman.entity.Enemy;
+import bomberman.object.BMPowerUp;
+import bomberman.entity.BMEnemy;
 import bomberman.entity.Explosion;
 import bomberman.entity.BMPlayer;
-import bomberman.tile.TileManager;
+import bomberman.tile.BMTileManager;
 import core.AbstractGamePanel;
-import core.Config;
-import core.GameState;
-import core.GameStateHandler;
-import core.KeyHandler;
 import core.LeaderboardPlayer;
 import core.LeaderboardSorter;
-import core.MainMenuState;
 import core.MainWindow;
-import core.MouseHandler;
-import core.Sound;
-import core.UI;
 
 public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 	//SCREEN SETTINGS
@@ -46,21 +33,15 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 	//SET LEVEL
 	private int level=1;
 	public static final String DATA_FILE = "BM_Leaderboard.dat";
-	private TileManager tileMgr = new TileManager(this);
-	
+	private BMTileManager tileMgr = new BMTileManager();
 	private BMScoreHandler scoreH = new BMScoreHandler();
-	private AssetSetter asset = new AssetSetter(this);
-	private ArrayList<Enemy> enemies = new ArrayList<>();
-	private ArrayList<PowerUp> obj = new ArrayList<>();
+	private BMAssetSetter asset = new BMAssetSetter(this);
+	private ArrayList<BMEnemy> enemies = new ArrayList<>();
+	private ArrayList<BMPowerUp> obj = new ArrayList<>();
 	private ArrayList<Bomb> bombs = new ArrayList<>();
 	private ArrayList<Explosion> explosions = new ArrayList<>();
 	public BMCollisionChecker colCheck = new BMCollisionChecker(this, asset, tileMgr, explosions);
-	//private LeaderboardSorterFactory;
-	
 	private BMPlayer player = new BMPlayer(this, keyH, colCheck);
-	
-	
-	
 	private Thread gameThread;
 	
 	
@@ -76,25 +57,17 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 		setInsState();
 	}
 	
-	/*public void returnToMenu() {
-        mainWindow.returnToMenu();
-    }*/
 	//GETTERS
-	public TileManager getTileManager() {return tileMgr;}
+	public BMTileManager getTileManager() {return tileMgr;}
 	public BMCollisionChecker getCollisionChecker() {return colCheck;}
 	public BMScoreHandler getScoreHandler() {return scoreH;}
-	public AssetSetter getAssetSetter() {return asset;}
-	public ArrayList<Enemy> getEnemies() {return enemies;}
-	public ArrayList<PowerUp> getObjects() {return obj;}
+	public BMAssetSetter getAssetSetter() {return asset;}
+	public ArrayList<BMEnemy> getEnemies() {return enemies;}
+	public ArrayList<BMPowerUp> getObjects() {return obj;}
 	public ArrayList<Bomb> getBombs() {return bombs;}
 	public BMPlayer getPlayer() {return player;}
-	public BMScoreHandler getScoreH() {
-		return scoreH;
-	}
-	//public GameState getGameState() {return gamestateH.getState();}
-	public PowerUp getObj(int i) {return obj.get(i);}
-	
-	
+	public BMScoreHandler getScoreH() {return scoreH;}
+	public BMPowerUp getObj(int i) {return obj.get(i);}
 	public String getLvl() {
 		String lvl;
 		lvl = String.valueOf(level);
@@ -110,15 +83,11 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 	
 	
 	//SETTERS
-	
 	public void setInsState() {gamestateH.setState(new BMInsState(ui));}
-	
 	public void setOverState() {gamestateH.setState(new BMGameOverState(ui)); stopMusic();}
 	public void setWinState() {gamestateH.setState(new BMWinState(this, ui));}
 	public void setNameEntered(boolean isEntered) {keyH.setNameEntered(isEntered);}
 	public void setCurPlayerName(String name) {currentPlayer.setName(name); mouseH.resetClick();}
-	//public void setBGM(boolean toggle) {music.toggle(toggle);}
-	
 	public void setPlayState() {gamestateH.setState(new BMPlayState(this, player, colCheck, bombs, explosions, enemies, ui));}
 	public void setPauseState() {gamestateH.setState(new BMPauseState(this, ui)); pauseMusic();}
 	public void setObjXY(int x, int y) {
@@ -194,15 +163,11 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 		//RUNTIME
 		//long timeStart = 0;
 		//timeStart = System.nanoTime();
-		if(getGameState() instanceof MainMenuState) {
-			
-		}
-		else {
 			//TILE
 			tileMgr.draw(g2);
 			
 			//POWERUPS
-			for(PowerUp pu: obj) {
+			for(BMPowerUp pu: obj) {
 				if(pu!= null) {pu.draw(g2, this);}
 			}
 			
@@ -215,7 +180,7 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 			player.draw(g2);
 			
 			//ENEMIES
-			for(Enemy enemy: enemies) {
+			for(BMEnemy enemy: enemies) {
 				if(!enemies.isEmpty()) {enemy.draw(g2);}
 			}
 			
@@ -228,7 +193,6 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 			
 			//UI
 			ui.draw(g2);
-		}
 		
 		//RUNTIME
 		//long timeEnd = System.nanoTime();
@@ -243,17 +207,10 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 	public void removeObj(int i) {obj.remove(i);}
 	public void updateLevel() {level = level+1;}
 	public void minusObjCnt() {asset.minusCnt();}
-	public void addEnemy(Enemy enemy) {enemies.add(enemy);}
-	public void addObj(PowerUp pu) {obj.add(pu);}
+	public void addEnemy(BMEnemy enemy) {enemies.add(enemy);}
+	public void addObj(BMPowerUp pu) {obj.add(pu);}
 	public void removeFirstObj() {obj.remove(0);}
-	
-	
-	
-	
-	//SOUNDS
-	
-	
-	
+
 	//LEADERBOARD AND SCORING
 	public void updateLeaderboard() {
 		currentPlayer = new LeaderboardPlayer(scoreH.getScoreVal());
@@ -277,7 +234,6 @@ public class BomberManGamePanel extends AbstractGamePanel implements Runnable{
 		}
 		return ls;
     }
-	
 	public void saveData() {
 		//ls.out();
 		 try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {

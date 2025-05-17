@@ -4,7 +4,7 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.util.ArrayList;
 
-import bomberman.entity.Enemy;
+import bomberman.entity.BMEnemy;
 import bomberman.entity.Explosion;
 import bomberman.entity.BMPlayer;
 import bomberman.object.Bomb;
@@ -17,9 +17,9 @@ public class BMPlayState implements GameState {
 	private BMCollisionChecker colCheck;
 	private ArrayList<Bomb> bombs;
 	private ArrayList<Explosion> explosions;
-	private ArrayList<Enemy> enemies;
+	private ArrayList<BMEnemy> enemies;
 	private UI ui;
-	public BMPlayState(BomberManGamePanel gp, BMPlayer player, BMCollisionChecker colCheck, ArrayList<Bomb> bombs, ArrayList<Explosion> explosions, ArrayList<Enemy> enemies, UI ui) {
+	public BMPlayState(BomberManGamePanel gp, BMPlayer player, BMCollisionChecker colCheck, ArrayList<Bomb> bombs, ArrayList<Explosion> explosions, ArrayList<BMEnemy> enemies, UI ui) {
 		this.gp = gp;
 		this.player = player;
 		this.colCheck = colCheck;
@@ -105,36 +105,36 @@ public class BMPlayState implements GameState {
 	}
 	
 	private void explode(Bomb b) {
-		int eX = b.getX()/gp.tileSize;
-		int eY = b.getY()/gp.tileSize;
+		int eX = b.getX()/BomberManGamePanel.tileSize;
+		int eY = b.getY()/BomberManGamePanel.tileSize;
 		boolean upEmpty = colCheck.checkTileExp(eX, eY-1, true);
 		boolean downEmpty = colCheck.checkTileExp(eX, eY+1, true);
 		boolean leftEmpty = colCheck.checkTileExp(eX-1, eY, true);
 		boolean rightEmpty = colCheck.checkTileExp(eX+1, eY, true);
-		gp.addExplosions(eX*gp.tileSize, eY*gp.tileSize);
+		gp.addExplosions(eX*BomberManGamePanel.tileSize, eY*BomberManGamePanel.tileSize);
 		for(int i = 0; i <= player.getBombRadius(); i++) {
 			if(eY-i>0 && upEmpty) {
 				upEmpty = colCheck.checkTileExp(eX, eY-i, upEmpty);
 				if(upEmpty) {
-					gp.addExplosions(eX*gp.tileSize, (eY-i)*gp.tileSize);
+					gp.addExplosions(eX*BomberManGamePanel.tileSize, (eY-i)*BomberManGamePanel.tileSize);
 				}
 			}
 			if(eY+i>0 && downEmpty) {
 				downEmpty = colCheck.checkTileExp(eX, eY+i, downEmpty);
 				if(downEmpty) {
-					gp.addExplosions(eX*gp.tileSize, (eY+i)*gp.tileSize);
+					gp.addExplosions(eX*BomberManGamePanel.tileSize, (eY+i)*BomberManGamePanel.tileSize);
 				}
 			}
 			if(eX-i>0 && leftEmpty) {
 				leftEmpty = colCheck.checkTileExp(eX-i, eY, leftEmpty);
 				if(leftEmpty) {
-					gp.addExplosions((eX-i)*gp.tileSize, eY*gp.tileSize);
+					gp.addExplosions((eX-i)*BomberManGamePanel.tileSize, eY*BomberManGamePanel.tileSize);
 				}
 			}
 			if(eX+i>0 && rightEmpty) {
 				rightEmpty = colCheck.checkTileExp(eX+i, eY, rightEmpty);
 				if(rightEmpty) {
-					gp.addExplosions((eX+i)*gp.tileSize, eY*gp.tileSize);
+					gp.addExplosions((eX+i)*BomberManGamePanel.tileSize, eY*BomberManGamePanel.tileSize);
 				}
 			}
 		}

@@ -10,19 +10,17 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-
-import bomberman.entity.BMPlayer;
 import bomberman.main.BomberManGamePanel;
-import bomberman.main.BMScoreHandler;
+
 
 public class UI {
 	
 	private AbstractGamePanel gp;
 	private MouseHandler mouseH;
-	//private ScoreHandlerInterface scoreH;
-	private PlayerInterface player;
+	//private PlayerInterface player;
 	private Graphics2D g2;
 	private UIUtility util = new UIUtility();//?
+	//BOMBERMAN UI COMPONENTS
 	private Font menu_70, menu_50, hud_40, hud_20;
 	private BufferedImage life, bomb, PUcap, PUrange, ins;
 	private final Rectangle resumeBounds = new Rectangle(308, 230, 152, 30);
@@ -33,10 +31,9 @@ public class UI {
 	private final Rectangle exitBounds = new Rectangle(333, 330, 102, 30);
 	private final Rectangle okBounds = new Rectangle(356, 500, 55, 25);
 	private final Rectangle backBounds = new Rectangle(10, 10, 104, 20);
-	private final Rectangle lsBounds = new Rectangle(10, 52, 96, 20);
+	private final Rectangle BMLBounds = new Rectangle(10, 52, 96, 20);
 	private final Rectangle PMLBounds = new Rectangle(106, 52, 67, 20);
 	private final Rectangle SILBounds = new Rectangle(173, 52, 134, 20);
-	//private final Rectangle BGMCheckBox = new Rectangle(674, 222, 24, 24);
 	private final Rectangle volSFXSlider = new Rectangle(548, 126, 150, 24);
 	private final Rectangle volSFXPlus = new Rectangle(698, 126, 24, 24);
 	private final Rectangle volSFXMinus = new Rectangle(524, 126, 24, 24);
@@ -51,20 +48,17 @@ public class UI {
 	private final String sdefaultPurple = "#b48cc8";
 	private final String sdarkGray = "#1e1e1e";
 	private final String slightGray = "#323232";
-	
 	private final Color backColor, frontColor, defaultBlue, defaultLBlue, defaultPurple, darkGray, lightGray;
 	private String text;
-	
-	private int x,y;
-	private int col1X, col2X, col3X, tableStartY, rowHeight, tableMargin;
-	private boolean lsselect, PMLselect, SILselect;
-	//private boolean BGMCheck = true;
+	private int x,y,col1X, col2X, col3X, tableStartY, rowHeight, tableMargin;
+	private boolean BMLselect, PMLselect, SILselect;
+
 	
 	
 	public UI(AbstractGamePanel gp, MouseHandler mouseH) {
 		this.gp = gp;
 		this.mouseH = mouseH;
-		//this.scoreH = scoreH;
+
 		menu_70 = util.createFont(70);
 		menu_50 = util.createFont(50);
 		hud_40 = util.createFont(40);
@@ -141,8 +135,8 @@ public class UI {
 		if(backBounds.contains(p)) {
 			System.out.println("CONTAINS BACK");
 			hoveredButton = backBounds;
-		} else if(lsBounds.contains(p)) {
-			hoveredButton = lsBounds;
+		} else if(BMLBounds.contains(p)) {
+			hoveredButton = BMLBounds;
 		} else if(PMLBounds.contains(p)) {
 			hoveredButton = PMLBounds;
 		} else if(SILBounds.contains(p)) {
@@ -474,14 +468,14 @@ public class UI {
 		y = 10;
 		util.addShadow(g2, 2, text, backColor, frontColor, x, 30);
 		y = tableStartY + rowHeight;
-		if(lsselect) {g2.setColor(defaultPurple);} else { g2.setColor(hoveredButton == lsBounds ? defaultPurple : Color.black);}
-		g2.fillRect(lsBounds.x, lsBounds.y, lsBounds.width, lsBounds.height);
+		if(BMLselect) {g2.setColor(defaultPurple);} else { g2.setColor(hoveredButton == BMLBounds ? defaultPurple : Color.black);}
+		g2.fill(BMLBounds);
 		if(PMLselect) {g2.setColor(defaultPurple);} else { g2.setColor(hoveredButton == PMLBounds ? defaultPurple : Color.black);}
 		g2.fillRect(PMLBounds.x, PMLBounds.y, PMLBounds.width, PMLBounds.height);
 		if(SILselect) {g2.setColor(defaultPurple);} else { g2.setColor(hoveredButton == SILBounds ? defaultPurple : Color.black);}
 		g2.fillRect(SILBounds.x, SILBounds.y, SILBounds.width, SILBounds.height);
 		g2.setColor(Color.white);
-		g2.draw(lsBounds);
+		g2.draw(BMLBounds);
 		g2.draw(PMLBounds);
 		g2.draw(SILBounds);
 		g2.setFont(hud_20);
@@ -489,18 +483,18 @@ public class UI {
 		
 		text = "BomberMan";
 		x = util.getTextX(g2, text);
-		g2.drawString(text, lsBounds.x+5, lsBounds.y+lsBounds.height-5);
+		g2.drawString(text, BMLBounds.x+5, BMLBounds.y+BMLBounds.height-5);
 		text = "PacMan";
 		g2.drawString(text, PMLBounds.x+5, PMLBounds.y+PMLBounds.height-5);
 		x = util.getTextX(g2, text);
 		text = "SpaceInvaders";
 		g2.drawString(text, SILBounds.x+5, SILBounds.y+SILBounds.height-5);
 		x = util.getTextX(g2, text);
-		//System.out.println(lsselect);
+		//System.out.println(BMLselect);
 		//System.out.println(PMLselect);
 		//System.out.println(SILselect);
 		MainMenuPanel menu = (MainMenuPanel) gp;
-		if(!lsselect && !PMLselect && !SILselect) {
+		if(!BMLselect && !PMLselect && !SILselect) {
 			g2.setColor(darkGray);
 			g2.fillRect(0, tableStartY, BomberManGamePanel.screenWidth, rowHeight*21);
 			text="No Game Leaderboard Selected";
@@ -510,36 +504,36 @@ public class UI {
 		}
 		else {
 			drawLeaderboardHeader();
-			if (lsselect) drawBMLeaderboard();
+			if (BMLselect) drawBMLeaderboard();
 	        if (PMLselect) drawPMLeaderboard();
 	        if (SILselect) drawSILeaderboard();
 		}
 
 		if(clickedThisFrame) {
-			if (lsBounds.contains(clickPoint)) {
+			if (BMLBounds.contains(clickPoint)) {
 	            System.out.println("RETURN");
 	            gp.playSFX(5);
 	            SILselect=false;
 	            PMLselect=false;
-	            lsselect=true;
+	            BMLselect=true;
 	        }
 			else if (PMLBounds.contains(clickPoint)) {
 	            System.out.println("leaderboard");
 	            gp.playSFX(5);
 	            SILselect=false;
-	            lsselect=false;
+	            BMLselect=false;
 	            PMLselect=true;
 	        }
 			else if (SILBounds.contains(clickPoint)) {
 				System.out.println("RESTART GO");
 				gp.playSFX(5);
-	            lsselect=false;
+	            BMLselect=false;
 				PMLselect=false;
 				SILselect=true;
 			} else if (backBounds.contains(clickPoint)) {
 	            System.out.println("BACK");
 	            gp.playSFX(5);
-	            lsselect=false;
+	            BMLselect=false;
 				PMLselect=false;
 				SILselect=false;
 	            // ADD BACK TO MAIN MENU
@@ -652,26 +646,10 @@ public class UI {
 		g2.drawString("+",volBGMPlus.x+2,volBGMPlus.y+volBGMPlus.height-2);
 		g2.drawString("-",volBGMMinus.x,volBGMMinus.y+volBGMMinus.height-2);
 		y=246;
-		/*g2.drawString("Toggle BGM:", 70, y);
-		g2.draw(BGMCheckBox);
-		if(BGMCheck) {
-			g2.fill(BGMCheckBox);
-		}*/
 		
 	    MainMenuPanel menu = (MainMenuPanel) gp;		
 		if(clickedThisFrame) {
-			//Point point = mouseH.getPoint();
-			/*if (BGMCheckBox.contains(clickPoint)) {
-	            System.out.println("CHECK");
-	            gp.playSFX(5);
-	            if(BGMCheck) {
-	            	BGMCheck = false;
-	            }
-	            else {
-	            	BGMCheck = true;
-	            }
-	            gp.setBGM(BGMCheck);
-	        }*/ if (volSFXPlus.contains(clickPoint)) {
+	          if (volSFXPlus.contains(clickPoint)) {
 	            System.out.println("SFXPLUS");
 	            gp.playSFX(5);
 	            menu.adjustSFX(1);
@@ -720,10 +698,5 @@ public class UI {
 			mouseH.resetClick();
 		}
 	}
-	/*public boolean getBGM() {
-		// TODO Auto-generated method stub
-		return BGMCheck;
-	}*/
-
 	
 }

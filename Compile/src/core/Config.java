@@ -6,13 +6,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import bomberman.main.BomberManGamePanel;
-
 public class Config {
 	private MainMenuPanel gp;
+	private static Config instance;
 	
-	public Config(MainMenuPanel gp) {
+	private Config(MainMenuPanel gp) {
 		this.gp = gp;
+	}
+	public static Config getInstance(MainMenuPanel gp) {
+		if (instance == null) instance = new Config(gp);
+        return instance;
 	}
 	
 	public void saveConfig() {

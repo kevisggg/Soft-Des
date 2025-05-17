@@ -12,7 +12,6 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import bomberman.main.BomberManGamePanel;
-import bomberman.main.ImageScaler;
 
 public class UIUtility {
 	private boolean toggleLeaderboard = false, back = false;

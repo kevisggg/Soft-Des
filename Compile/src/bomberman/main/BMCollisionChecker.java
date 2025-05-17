@@ -4,24 +4,24 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Random;
 
-import bomberman.entity.Enemy;
+import bomberman.entity.BMEnemy;
 import bomberman.entity.BMEntity;
 import bomberman.entity.Explosion;
 import bomberman.entity.BMPlayer;
-import bomberman.object.PowerUp;
-import bomberman.tile.TileManager;
+import bomberman.object.BMPowerUp;
+import bomberman.tile.BMTileManager;
 
 public class BMCollisionChecker{
 	
 	private BomberManGamePanel gp;
-	private TileManager tileMgr;
-	private AssetSetter asset;
+	private BMTileManager tileMgr;
+	private BMAssetSetter asset;
 	private Rectangle playerBox;
 	private boolean hit;
-	private ArrayList<PowerUp> obj;
+	private ArrayList<BMPowerUp> obj;
 	private ArrayList<Explosion> explosions;
 	
-	public BMCollisionChecker(BomberManGamePanel gp, AssetSetter asset, TileManager tileMgr, ArrayList<Explosion> explosions) {
+	public BMCollisionChecker(BomberManGamePanel gp, BMAssetSetter asset, BMTileManager tileMgr, ArrayList<Explosion> explosions) {
 		this.gp = gp;
 		this.asset = asset;
 		this.tileMgr = tileMgr;
@@ -77,7 +77,7 @@ public class BMCollisionChecker{
 		}
 	}
 	
-	public boolean checkEnemy(BMEntity entity, ArrayList<Enemy> targets) {
+	public boolean checkEnemy(BMEntity entity, ArrayList<BMEnemy> targets) {
 		
 		boolean hit = false;
 		for(int i=0; i<targets.size(); i++) {

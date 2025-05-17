@@ -5,13 +5,13 @@ import java.awt.image.BufferedImage;
 import bomberman.main.BMCollisionChecker;
 import bomberman.main.BomberManGamePanel;
 import bomberman.object.Bomb;
-import bomberman.object.PowerUp;
+import bomberman.object.BMPowerUp;
 import core.KeyHandler;
 import core.PlayerInterface;
 
 public class BMPlayer extends BMEntity implements PlayerInterface{
 	private KeyHandler keyH;
-	private PowerUp obj;
+	private BMPowerUp obj;
 	private int bombCnt, bombRadius, bombsPlaced, bombCooldown, lives, invincibleCnt, invincibleDuration, blinkInterval, collisionTile;
 	private boolean  isInvincible, isVisible, bombAlreadyPlaced;
 	
@@ -91,7 +91,7 @@ public class BMPlayer extends BMEntity implements PlayerInterface{
 	}
 	
 	public void dropBomb() {
-		Bomb b = new Bomb((worldX + collisionBox.x + 5)/gp.tileSize*gp.tileSize, (worldY+collisionBox.y+10)/gp.tileSize*gp.tileSize, gp);
+		Bomb b = new Bomb((worldX + collisionBox.x + 5)/BomberManGamePanel.tileSize*BomberManGamePanel.tileSize, (worldY+collisionBox.y+10)/BomberManGamePanel.tileSize*BomberManGamePanel.tileSize, gp);
 		gp.getBombs().add(b);
 		bombsPlaced++;
 		gp.playSFX(1);
@@ -124,7 +124,6 @@ public class BMPlayer extends BMEntity implements PlayerInterface{
 		}
 		if(bombCooldown > 12) {
 			if(keyH.getSpace()==true) {
-				//check if bombs available, MAKE METHOD
 				collisionTile = gp.getTileManager().getMapTileNum((worldX + collisionBox.x+5)/BomberManGamePanel.tileSize, (worldY+collisionBox.y+10)/BomberManGamePanel.tileSize);
 				if(bombsPlaced < bombCnt && !gp.getTileManager().getTileCollision(collisionTile)) {
 					bombAlreadyPlaced = false;
@@ -162,8 +161,6 @@ public class BMPlayer extends BMEntity implements PlayerInterface{
 			//CHECK POWERUP PICKUP
 			int objIndex = colCheck.checkObject(this);
 			if(objIndex!=999) {//if powerup picked up
-				//addScore(SCORE_PU);
-				//System.out.println("PICKUP: " + gp.obj.get(objIndex).name);
 				gp.minusObjCnt();
 				obj = gp.getObj(objIndex);
 				switch(obj.getName()) {
@@ -208,10 +205,7 @@ public class BMPlayer extends BMEntity implements PlayerInterface{
 			}
 		}
 		if(entityHit) {
-			//System.out.println("PLAYER HIT");
-			lives--;
-			//System.out.println("Lives: " + lives);
-			
+			lives--;			
 			entityHit = false;
 			gp.playSFX(3);
 		}

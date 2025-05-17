@@ -6,7 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import bomberman.main.BomberManGamePanel;
-import bomberman.main.ImageScaler;
+import core.ImageScaler;
 
 
 public class Explosion{

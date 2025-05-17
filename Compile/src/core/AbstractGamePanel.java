@@ -1,16 +1,6 @@
 package core;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 import javax.swing.JPanel;
-
-import bomberman.entity.BMPlayer;
-import bomberman.main.BMCollisionChecker;
 
 public class AbstractGamePanel  extends JPanel{
 	
@@ -24,9 +14,6 @@ public class AbstractGamePanel  extends JPanel{
 	public MouseHandler mouseH = new MouseHandler(this);
 	public ScoreHandlerInterface scoreH;
 	public UI ui = new UI(this, mouseH);
-	//public PlayerInterface player;
-	//public BMCollisionChecker colCheck = new BMCollisionChecker(this, asset, tileMgr, explosions);
-	//public Player player = new Player(this, keyH, colCheck);
 	
 	public void returnToMenu() {
 		stopMusic();
@@ -56,23 +43,19 @@ public class AbstractGamePanel  extends JPanel{
 		sfx.setFile(i);
 		sfx.play();
 	}
-	public void setPlayState() {
-		// TODO Auto-generated method stub
-		
-	}
-	public void restartGame() {
-		// TODO Auto-generated method stub
-		
-	}
 	
+	public void setInsState() {}
+	public void setPlayState() {}
+	public void setPauseState() {}
+	public void setOverState() {}
+	public void setWinState() {}
+	public void restartGame() {}
 	public void update() {gamestateH.request();}
-	//public BMPlayer getPlayer() {return null;}
 	public GameState getGameState() {return gamestateH.getState();}
-	
-	/*public PlayerInterface getPlayer() {
-		return player;
-	}*/
-	
+	public String getLvl() {
+		return null;
+	}
+	public void setCurPlayerName(String name) {}
 	
 	//FILE HANDLING
 		public LeaderboardSorter loadData() {
@@ -81,13 +64,5 @@ public class AbstractGamePanel  extends JPanel{
 		
 		public void saveData() {
 			//ls.out();
-		}
-		public String getLvl() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-		public void setCurPlayerName(String name) {
-			// TODO Auto-generated method stub
-			
-		}
+		}	
 }

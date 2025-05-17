@@ -5,7 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import bomberman.main.BomberManGamePanel;
-import bomberman.main.ImageScaler;
+import core.ImageScaler;
 
 public class Bomb {
 	BomberManGamePanel gp;
@@ -35,7 +35,7 @@ public class Bomb {
 		ImageScaler s = new ImageScaler();
 		try {
 			image = ImageIO.read(getClass().getResourceAsStream(path));
-			image = s.scale(gp.tileSize, gp.tileSize, image);
+			image = s.scale(BomberManGamePanel.tileSize, BomberManGamePanel.tileSize, image);
 		}catch(IOException e) {
 			e.printStackTrace();
 		}

@@ -1,0 +1,43 @@
+Backgrounds
+
+black.jpg 600x981
+game-over.jpg 400x225
+space.jpg 600x981
+titlescreen.png 362x252
+titlescreenbackground.png 733x440
+
+SFX
+
+It makes no difference what size you have the sound files.  Sound effects are played once and the music is played on loop.
+
+Sprites -> Enemies
+
+enemy_ships.png 300x150
+5 rows and 10 columns, all 30x30
+The first row contains only three sprites for a single spaceship animation.
+The following four rows contain 10 sprites for various spaceship animations.
+That means part of this sprite sheet is not used (the top row between columns 4-10).
+
+Sprites -> Explosions
+
+explosion.png 210x30, all 30x30
+This is one row with 7 different sprites to show a single explosion animation for all enemy spaceships except the stray.
+
+explosion_player.png 420x30, all 30x30
+This is one row with 14 different sprites to show the player's explosion animation.
+
+explosion_stray.png 750x30, all 30x30
+This is one row with 25 different sprites to show a single explosion animation for the stray enemy ship that occasionally appears on top.
+
+Sprites -> Player
+
+player.png 35x35
+This is a single sprite for the player ship.  It does not animate.
+
+Sprites -> Weapons
+
+missile.png 3x20
+This is a single sprite for the player's missile.  It does not animate.
+
+missile-enemy.png 3x20
+This is a single sprite for the enemy's missile.  It does not animate.

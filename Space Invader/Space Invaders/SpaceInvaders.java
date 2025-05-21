@@ -15,7 +15,81 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) System.exit(0);
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_ESCAPE) System.exit(0);
+        // --- Name Entry Handling ---
+        if (gameOver && nameEntryActive && !nameEntryComplete) {
+            int code = e.getKeyCode();
+            if (code == KeyEvent.VK_BACK_SPACE) {
+                if (!playerName.isEmpty()) {
+                    playerName = playerName.substring(0, playerName.length() - 1);
+                    repaint();
+                }
+                return;
+            } else if (code == KeyEvent.VK_ENTER) {
+                if (!playerName.trim().isEmpty() && pendingNameEntry && pendingScore != null) {
+                    nameEntryComplete = true;
+                    nameEntryActive = false;
+                    // Update the pending score's name and re-sort leaderboard
+                    pendingScore.setName(playerName);
+                    leaderboardManager.addPlayer(pendingScore); // This will update the name and re-sort
+                    pendingNameEntry = false;
+                    pendingScore = null;
+                    repaint();
+                }
+                return;
+            }
+            // Ignore all other keys here (actual character input handled in keyTyped)
+            return;
+        }
+        // --- GAME OVER MENU SELECTION ---
+        if (gameOver && !nameEntryActive && nameEntryComplete) {
+            int code = e.getKeyCode();
+            if (code == KeyEvent.VK_UP) {
+                gameOverMenuIndex = (gameOverMenuIndex - 1 + gameOverMenuOptions.length) % gameOverMenuOptions.length;
+                repaint();
+                return;
+            } else if (code == KeyEvent.VK_DOWN) {
+                gameOverMenuIndex = (gameOverMenuIndex + 1) % gameOverMenuOptions.length;
+                repaint();
+                return;
+            } else if (code == KeyEvent.VK_ENTER) {
+                switch (gameOverMenuIndex) {
+                    case 0: // RESTART
+                        resetGame();
+                        inGame = false;
+                        mainMenu = true;
+                        titleScreen = false;
+                        gameOver = false;
+                        nameEntryActive = false;
+                        nameEntryComplete = true;
+                        pendingNameEntry = false;
+                        pendingScore = null;
+                        playerName = "";
+                        repaint();
+                        break;
+                    case 1: // VIEW LEADERBOARD
+                        leaderboardScreen = true;
+                        gameOver = false;
+                        nameEntryActive = false;
+                        nameEntryComplete = false;
+                        repaint();
+                        break;
+                    case 2: // RETURN TO MENU
+                        resetGame();
+                        titleScreen = true;
+                        mainMenu = false;
+                        gameOver = false;
+                        nameEntryActive = false;
+                        nameEntryComplete = false;
+                        repaint();
+                        break;
+                }
+                return;
+            }
+            return;
+        }
+        // --- TITLE SCREEN ---
         if (titleScreen) {
             int code = e.getKeyCode();
             if (code == KeyEvent.VK_UP) {
@@ -37,7 +111,6 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
                         // Show leaderboard screen
                         titleScreen = false;
                         leaderboardScreen = true;
-                        leaderboardMenuIndex = 0;
                         repaint();
                         break;
                     case 2: // Help
@@ -58,6 +131,21 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_ENTER) {
                 leaderboardScreen = false;
                 titleScreen = true;
+                repaint();
+                return;
+            }
+            // Add scrolling if needed (now supports full leaderboard)
+            java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+            int totalRows = topPlayers.size();
+            int dynamicRows = 20;
+            int maxScroll = Math.max(0, totalRows - dynamicRows);
+            if (leaderboardScroll > maxScroll) leaderboardScroll = maxScroll;
+            if (code == KeyEvent.VK_UP) {
+                leaderboardScroll = Math.max(0, leaderboardScroll - 1);
+                repaint();
+                return;
+            } else if (code == KeyEvent.VK_DOWN) {
+                leaderboardScroll = Math.min(maxScroll, leaderboardScroll + 1);
                 repaint();
                 return;
             }
@@ -97,7 +185,11 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
                     case 1: // RESTART
                         paused = false;
                         resetGame();
-                        inGame = true;
+                        // Show the "Press any key to continue" screen (mainMenu)
+                        mainMenu = true;
+                        titleScreen = false;
+                        gameOver = false;
+                        nextRound = false;
                         repaint();
                         break;
                     case 2: // EXIT
@@ -136,7 +228,16 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // REMOVE name input handling
+        // --- Name Entry Character Input ---
+        if (gameOver && nameEntryActive && !nameEntryComplete) {
+            char c = e.getKeyChar();
+            if ((Character.isLetterOrDigit(c) || c == ' ' || c == '-' || c == '_') && playerName.length() < MAX_NAME_LENGTH) {
+                playerName += c;
+                repaint();
+            }
+            // Ignore all other input
+            return;
+        }
     }
 
     // Colors
@@ -189,8 +290,6 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
     private long lastEnemyShot = 0;
     private long lastPlayerShot = 0;
     private long lastMusicNote = 0;
-    private int round = 1;
-    private long nextRoundStartTime = 0;
     // --- Invincibility state ---
     private boolean playerInvincible = false;
     private long playerInvincibleStart = 0;
@@ -201,6 +300,9 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
     private boolean mysteryActive = false;
     private boolean mysteryAppearedThisRound = false;
     private Random random = new Random();
+
+    // --- Next Round Timer ---
+    private long nextRoundStartTime = 0;
 
     // --- Title Screen State ---
     private boolean titleScreen = true; // Show title screen first
@@ -217,14 +319,26 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
     private final String[] pauseMenuOptions = {"RESUME", "RESTART", "EXIT"};
 
     // --- Leaderboard State ---
+    private SILeaderboardManager leaderboardManager = new SILeaderboardManager();
     private boolean leaderboardScreen = false;
-    private int leaderboardMenuIndex = 0; // Only one option: < BACK
     private int leaderboardScroll = 0; // For scrolling
-    private final int LEADERBOARD_ROWS = 10;
-    private java.util.List<String> leaderboardNames = new ArrayList<>();
-    private java.util.List<Integer> leaderboardScores = new ArrayList<>();
+    private final int LEADERBOARD_ROWS = 20; // Show up to 20 rows at a time
+
+    // --- Name Entry State ---
+    private boolean nameEntryActive = false;
+    private boolean nameEntryComplete = true;
+    private String playerName = "";
+    private final int MAX_NAME_LENGTH = 10;
+
+    // --- Game Over Menu Selection ---
+    private int gameOverMenuIndex = 0;
+    private final String[] gameOverMenuOptions = {"RESTART", "VIEW LEADERBOARD", "RETURN TO MENU"};
 
     private Clip themeSongClip = null;
+
+    // --- Pending Name Entry for Game Over ---
+    private boolean pendingNameEntry = false;
+    private SIPlayerScore pendingScore = null;
 
     public SpaceInvaders() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -256,6 +370,26 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
         // Register mouse listener
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) { SpaceInvaders.this.mousePressed(e); }
+        });
+        // Register mouse wheel listener for leaderboard scrolling
+        addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if (leaderboardScreen) {
+                    java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+                    int totalRows = topPlayers.size();
+                    int tableY = 150;
+                    int rowH = 32;
+                    int maxTableHeight = HEIGHT - tableY - 40;
+                    int visibleRows = Math.min(LEADERBOARD_ROWS, (maxTableHeight - rowH) / rowH);
+                    int maxScroll = Math.max(0, totalRows - visibleRows);
+                    int notches = e.getWheelRotation();
+                    leaderboardScroll += notches;
+                    if (leaderboardScroll < 0) leaderboardScroll = 0;
+                    if (leaderboardScroll > maxScroll) leaderboardScroll = maxScroll;
+                    repaint();
+                }
+            }
         });
     }
 
@@ -311,7 +445,10 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
     }
 
     private void resetGame() {
-        enemyPosition = 65; // Reset enemy position to original value at the very start
+        // Reset all game state variables
+        score = 0;
+        livesCount = 3;
+        enemyPosition = 65;
         player = new Ship(WIDTH / 2 - 25, HEIGHT - 60);
         bullets.clear();
         enemyBullets.clear();
@@ -343,14 +480,11 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             }
         }
         // Do NOT create a mystery ship here!
-        score = 0;
-        livesCount = 3;
         inGame = false;
         gameOver = false;
         // Always start at the title screen
         titleScreen = true;
         mainMenu = false;
-        round = 1;
         // enemyPosition = 65; // (Moved to top)
         // Don't add mystery here; it will be added randomly in updateGame
         mysteryActive = false;
@@ -409,8 +543,12 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             return;
         }
         if (gameOver) {
-            // Instead of auto-reset, show new game over screen
-            // gameOver = false; // <-- Remove this line to allow the game over screen to persist
+            // --- Name Entry Activation ---
+            if (!nameEntryActive && !nameEntryComplete) {
+                nameEntryActive = true;
+                nameEntryComplete = false;
+                playerName = "";
+            }
             repaint();
             return;
         }
@@ -520,20 +658,24 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             ex.update();
             if (ex.done) it.remove();
         }
-        // Music
+        // Music tempo logic based on enemies left
         int count = enemies.size();
-        int musicDelay = 600;
-        if (count > 15) musicDelay = 600;
-        else if (count > 5) musicDelay = 300;
-        else musicDelay = 150;
-        if (System.currentTimeMillis() - lastMusicNote > musicDelay) {
+        long now = System.currentTimeMillis();
+        long musicDelay;
+        if (count > 15) {
+            musicDelay = 600;
+        } else if (count > 5) {
+            musicDelay = 300;
+        } else {
+            musicDelay = 150;
+        }
+        if (now - lastMusicNote > musicDelay) {
             playMusicNote();
         }
         // Check for round clear
         if (enemies.isEmpty() && explosions.isEmpty() && !nextRound && inGame) {
             nextRound = true;
             inGame = false;
-            round++;
             nextRoundStartTime = System.currentTimeMillis();
         }
     }
@@ -565,6 +707,16 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
                     if (livesCount <= 0) {
                         gameOver = true;
                         inGame = false;
+                        // Prepare for name entry and leaderboard update
+                        if (!pendingNameEntry) {
+                            pendingNameEntry = true;
+                            nameEntryActive = true;
+                            nameEntryComplete = false;
+                            playerName = "";
+                            // Do NOT add score to leaderboard here; wait until name entry is complete
+                            pendingScore = new SIPlayerScore("", score);
+                            // Score will be added to leaderboard after name entry
+                        }
                     }
                     it.remove();
                     // --- Start invincibility ---
@@ -614,14 +766,16 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             for (Iterator<Bullet> bit = bullets.iterator(); bit.hasNext(); ) {
                 Bullet b = bit.next();
                 if (b.getRect().intersects(m.getRect())) {
+                    // Award 0, 150, or 300 points with equal probability
                     int[] possible = {0, 150, 300};
-                    int idx = random.nextInt(3);
+                    int idx = random.nextInt(possible.length); // 0, 1, or 2
                     int value = possible[idx];
                     score += value;
                     bit.remove();
                     mit.remove(); // Remove the mystery ship icon immediately (only once)
                     mysteryActive = false;
                     mysteryAppearedThisRound = true;
+                    // Show the awarded points as a popup at the ship's location
                     mysteryPopups.add(new MysteryScorePopup(m.x + 37, m.y + 20, value));
                     playSound("mysterykilled");
                     hit = true;
@@ -654,11 +808,6 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
     }
 
     private void playMusicNote() {
-        int count = enemies.size();
-        int musicDelay = 600;
-        if (count > 15) musicDelay = 600; // normal
-        else if (count > 5) musicDelay = 300; // 2x faster
-        else musicDelay = 150; // 3x faster
         if (musicNotes[noteIndex] != null) {
             if (musicNotes[noteIndex].isRunning()) musicNotes[noteIndex].stop();
             musicNotes[noteIndex].setFramePosition(0);
@@ -677,11 +826,8 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
     }
 
     @Override
-    public void paintComponent(Graphics g) {
+    protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
-        int drawW = WIDTH;
-        int drawH = HEIGHT;
         // --- TITLE SCREEN ---
         if (titleScreen) {
             // Draw animated background if available
@@ -689,132 +835,183 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
                 // Tile the background to cover the whole screen, even if the image is smaller
                 int imgW = titleScreenBgImg.getWidth();
                 int imgH = titleScreenBgImg.getHeight();
-                for (int x = -titleBgOffset; x < drawW; x += imgW) {
-                    for (int y = 0; y < drawH; y += imgH) {
-                        g2.drawImage(titleScreenBgImg, x, y, null);
+                for (int x = -titleBgOffset; x < WIDTH; x += imgW) {
+                    for (int y = 0; y < HEIGHT; y += imgH) {
+                        g.drawImage(titleScreenBgImg, x, y, null);
                     }
                 }
             } else {
-                g2.setColor(Color.BLACK);
-                g2.fillRect(0, 0, drawW, drawH);
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, WIDTH, HEIGHT);
             }
             // Draw logo if available, scale to fit nicely
             int logoY = 60;
             int logoH = 0;
             if (titleScreenLogoImg != null) {
-                int logoW = (int)(drawW * 0.56); // Slightly wider (was 0.48)
+                int logoW = (int)(WIDTH * 0.56); // Slightly wider (was 0.48)
                 logoH = (int)(logoW * ((double)titleScreenLogoImg.getHeight() / titleScreenLogoImg.getWidth()));
-                int logoX = (drawW - logoW) / 2;
-                g2.drawImage(titleScreenLogoImg, logoX, logoY, logoW, logoH, null);
+                int logoX = (WIDTH - logoW) / 2;
+                g.drawImage(titleScreenLogoImg, logoX, logoY, logoW, logoH, null);
             } else {
-                g2.setFont(gameFont.deriveFont(Font.BOLD, 60f));
-                g2.setColor(WHITE);
+                g.setFont(gameFont.deriveFont(Font.BOLD, 60f));
+                g.setColor(WHITE);
                 String title = "SPACE INVADERS";
-                FontMetrics fm = g2.getFontMetrics();
-                int tx = (drawW - fm.stringWidth(title)) / 2;
+                FontMetrics fm = g.getFontMetrics();
+                int tx = (WIDTH - fm.stringWidth(title)) / 2;
                 logoH = 90;
-                g2.drawString(title, tx, logoY + logoH / 2);
+                g.drawString(title, tx, logoY + logoH / 2);
             }
             // Draw menu options below the logo, with more vertical space
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 32f)); // Smaller font for options
-            int menuStartY = logoY + (titleScreenLogoImg != null ? logoH : 90) + 60; // 60px below logo
-            int menuSpacing = 50; // Slightly less spacing
+            // Restore larger font and spacing for menu
+            g.setFont(gameFont.deriveFont(Font.BOLD, 32f)); // Restore to 32f
+            int menuStartY = logoY + (titleScreenLogoImg != null ? logoH : 90) + 60; // Restore to 60px below logo
+            int menuSpacing = 50; // Restore spacing between options
             int totalMenuHeight = (titleMenuOptions.length - 1) * menuSpacing;
             // Center the menu block vertically in the remaining space below the logo, but keep a safe margin from the bottom
-            int maxMenuY = drawH - 60; // 60px margin from bottom
+            int maxMenuY = HEIGHT - 60; // 60px margin from bottom
             if (menuStartY + totalMenuHeight > maxMenuY) {
                 menuStartY = maxMenuY - totalMenuHeight;
             }
             for (int i = 0; i < titleMenuOptions.length; i++) {
                 String opt = titleMenuOptions[i];
-                int x = drawW / 2;
+                int x = WIDTH / 2;
                 int y = menuStartY + i * menuSpacing;
                 if (i == titleMenuIndex) {
-                    g2.setColor(Color.YELLOW);
-                    drawCenteredString(g2, opt, x, y);
+                    g.setColor(Color.YELLOW);
+                    drawCenteredString((Graphics2D) g, opt, x, y);
                 } else {
-                    g2.setColor(Color.WHITE);
-                    drawCenteredString(g2, opt, x, y);
+                    g.setColor(Color.WHITE);
+                    drawCenteredString((Graphics2D) g, opt, x, y);
                 }
             }
             return;
         }
         // --- GAME OVER SCREEN ---
         if (gameOver) {
-            // Draw moving/tiled background using titlescreenbackground.png
+            // --- Bomberman-style GAME OVER screen ---
+            // Moving/tiled background (like title screen)
             if (titleScreenBgImg != null) {
                 int imgW = titleScreenBgImg.getWidth();
                 int imgH = titleScreenBgImg.getHeight();
-                for (int x = -titleBgOffset; x < drawW; x += imgW) {
-                    for (int y = 0; y < drawH; y += imgH) {
-                        g2.drawImage(titleScreenBgImg, x, y, null);
+                for (int x = -titleBgOffset; x < WIDTH; x += imgW) {
+                    for (int y = 0; y < HEIGHT; y += imgH) {
+                        g.drawImage(titleScreenBgImg, x, y, null);
                     }
                 }
+                // Animate background offset
+                titleBgOffset = (titleBgOffset + titleBgSpeed) % imgW;
             } else {
-                g2.setColor(Color.DARK_GRAY);
-                g2.fillRect(0, 0, drawW, drawH);
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, WIDTH, HEIGHT);
             }
-            // Animate background offset (same as title screen)
-            titleBgOffset = (titleBgOffset + titleBgSpeed) % (titleScreenBgImg != null ? titleScreenBgImg.getWidth() : WIDTH);
-            // Dim overlay
-            g2.setColor(new Color(0, 0, 0, 180));
-            g2.fillRect(0, 0, drawW, drawH);
-            // Draw GAME OVER text
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 72f));
-            g2.setColor(RED);
+            // GAME OVER title with shadow
+            g.setFont(gameFont.deriveFont(Font.BOLD, 72f));
             String gameOverText = "GAME OVER";
-            int goW = g2.getFontMetrics().stringWidth(gameOverText);
-            g2.drawString(gameOverText, (drawW - goW) / 2, drawH / 2 - 60);
-            // Draw score
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 36f));
-            g2.setColor(WHITE);
+            int goX = (WIDTH - g.getFontMetrics().stringWidth(gameOverText)) / 2;
+            int goY = HEIGHT / 3;
+            g.setColor(new Color(0,0,0,180));
+            g.drawString(gameOverText, goX+4, goY+4);
+            g.setColor(RED);
+            g.drawString(gameOverText, goX, goY);
+            // Score
+            g.setFont(gameFont.deriveFont(Font.BOLD, 36f));
             String scoreText = "SCORE: " + score;
-            int scoreW = g2.getFontMetrics().stringWidth(scoreText);
-            g2.drawString(scoreText, (drawW - scoreW) / 2, drawH / 2);
-            // Draw prompt
-            g2.setFont(gameFont.deriveFont(Font.PLAIN, 28f));
-            String prompt = "PRESS ANY KEY TO RETURN TO TITLE";
-            int promptW = g2.getFontMetrics().stringWidth(prompt);
-            g2.drawString(prompt, (drawW - promptW) / 2, drawH / 2 + 60);
+            int scoreX = (WIDTH - g.getFontMetrics().stringWidth(scoreText)) / 2;
+            int scoreY = goY + 60;
+            g.setColor(Color.WHITE);
+            g.drawString(scoreText, scoreX, scoreY);
+            // Rank (if available)
+            int rank = 0;
+            java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+            for (SIPlayerScore p : topPlayers) {
+                if (p.getName().equals(playerName) && p.getScore() == score) {
+                    rank = p.getRank();
+                    break;
+                }
+            }
+            if (rank > 0) {
+                String rankText = "RANK: " + rank;
+                int rankX = (WIDTH - g.getFontMetrics().stringWidth(rankText)) / 2;
+                int rankY = scoreY + 40;
+                g.drawString(rankText, rankX, rankY);
+            }
+            // Options (plain text, no boxes, highlight selected)
+            g.setFont(gameFont.deriveFont(Font.BOLD, 32f));
+            int btnYStart = HEIGHT/2 + 60;
+            int btnSpacing = 50;
+            for (int i = 0; i < gameOverMenuOptions.length; i++) {
+                String btn = gameOverMenuOptions[i];
+                int btnW = g.getFontMetrics().stringWidth(btn);
+                int btnX = (WIDTH - btnW) / 2;
+                int btnY = btnYStart + i * btnSpacing;
+                if (!nameEntryActive && nameEntryComplete && i == gameOverMenuIndex) {
+                    g.setColor(Color.WHITE);
+                    g.drawString(btn, btnX, btnY);
+                    g.setColor(Color.YELLOW);
+                    g.drawLine(btnX, btnY + 5, btnX + btnW, btnY + 5); // underline
+                } else {
+                    g.setColor(Color.YELLOW);
+                    g.drawString(btn, btnX, btnY);
+                }
+            }
+            // Name entry box (if needed)
+            if (nameEntryActive && !nameEntryComplete) {
+                int boxX = (WIDTH - 400) / 2;
+                int boxY = btnYStart + gameOverMenuOptions.length * btnSpacing + 20;
+                int boxW = 400;
+                int boxH = 50;
+                g.setColor(new Color(0, 0, 0, 200));
+                g.fillRect(boxX, boxY, boxW, boxH);
+                g.setColor(Color.WHITE);
+                g.drawRect(boxX, boxY, boxW, boxH);
+                g.setFont(gameFont.deriveFont(Font.PLAIN, 24f));
+                String instructions = "Enter your name: (max 10 chars)";
+                int instrW = g.getFontMetrics().stringWidth(instructions);
+                g.drawString(instructions, (WIDTH - instrW) / 2, boxY - 10);
+                g.setFont(gameFont.deriveFont(Font.BOLD, 28f));
+                int nameX = boxX + 10;
+                int nameY = boxY + 35;
+                g.drawString(playerName, nameX, nameY);
+            }
             return;
         }
         // Draw background
         if (images.get("background") != null) {
-            g2.drawImage(images.get("background"), 0, 0, drawW, drawH, null);
+            g.drawImage(images.get("background"), 0, 0, WIDTH, HEIGHT, null);
         }
-        g2.setFont(gameFont);
-        g2.setColor(WHITE);
+        g.setFont(gameFont);
+        g.setColor(WHITE);
         if (mainMenu) {
-            g2.setFont(gameFont.deriveFont(50f));
-            g2.drawString("Space Invaders", 164, 155);
-            g2.setFont(gameFont.deriveFont(25f));
-            g2.drawString("Press any key to continue", 201, 225);
-            g2.drawImage(images.get("enemy3_1"), 318, 270, 40, 40, null);
-            g2.drawString("=   10 pts", 368, 290);
-            g2.drawImage(images.get("enemy2_2"), 318, 320, 40, 40, null);
-            g2.drawString("=  20 pts", 368, 340);
-            g2.drawImage(images.get("enemy1_2"), 318, 370, 40, 40, null);
-            g2.drawString("=  30 pts", 368, 390);
-            g2.drawImage(images.get("mystery"), 299, 420, 80, 40, null);
-            g2.drawString("=  ?????", 368, 440);
+            g.setFont(gameFont.deriveFont(50f));
+            g.drawString("Space Invaders", 164, 155);
+            g.setFont(gameFont.deriveFont(25f));
+            g.drawString("Press any key to continue", 201, 225);
+            g.drawImage(images.get("enemy3_1"), 318, 270, 40, 40, null);
+            g.drawString("=   10 pts", 368, 290);
+            g.drawImage(images.get("enemy2_2"), 318, 320, 40, 40, null);
+            g.drawString("=  20 pts", 368, 340);
+            g.drawImage(images.get("enemy1_2"), 318, 370, 40, 40, null);
+            g.drawString("=  30 pts", 368, 390);
+            g.drawImage(images.get("mystery"), 299, 420, 80, 40, null);
+            g.drawString("=  ?????", 368, 440);
             return;
         }
         if (gameOver) {
-            g2.setFont(gameFont.deriveFont(50f));
-            g2.drawString("Game Over", 250, 270);
+            g.setFont(gameFont.deriveFont(50f));
+            g.drawString("Game Over", 250, 270);
             return;
         }
         if (nextRound) {
             // Draw score and lives at the top
-            g2.setFont(gameFont.deriveFont(20f));
-            g2.setColor(WHITE);
-            g2.drawString("SCORE", 5, 25);
-            g2.setColor(GREEN);
-            g2.drawString(String.valueOf(score), 85, 25);
+            g.setFont(gameFont.deriveFont(20f));
+            g.setColor(WHITE);
+            g.drawString("SCORE", 5, 25);
+            g.setColor(GREEN);
+            g.drawString(String.valueOf(score), 85, 25);
             // Draw lives at the top right, spaced from the right edge
-            g2.setColor(WHITE);
+            g.setColor(WHITE);
             String livesLabel = "LIVES";
-            FontMetrics fm = g2.getFontMetrics();
+            FontMetrics fm = g.getFontMetrics();
             int labelWidth = fm.stringWidth(livesLabel);
             int iconWidth = 23;
             int iconSpacing = 27;
@@ -822,19 +1019,19 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             int totalIconsWidth = livesCount * iconWidth + (livesCount - 1) * (iconSpacing - iconWidth);
             int lifeX = WIDTH - rightMargin - totalIconsWidth;
             int labelX = lifeX - 8 - labelWidth; // 8px gap between label and first icon
-            g2.drawString(livesLabel, labelX, 25);
+            g.drawString(livesLabel, labelX, 25);
             for (int i = 0; i < livesCount; i++) {
-                g2.drawImage(images.get("ship"), (lifeX + i * iconSpacing), 7, iconWidth, iconWidth, null);
+                g.drawImage(images.get("ship"), (lifeX + i * iconSpacing), 7, iconWidth, iconWidth, null);
             }
             // Draw centered 'NEXT ROUND' text
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 56f));
-            g2.setColor(WHITE);
+            g.setFont(gameFont.deriveFont(Font.BOLD, 56f));
+            g.setColor(WHITE);
             String msg = "NEXT ROUND";
-            fm = g2.getFontMetrics();
+            fm = g.getFontMetrics();
             int msgWidth = fm.stringWidth(msg);
             int msgX = (WIDTH - msgWidth) / 2;
             int msgY = HEIGHT / 2 + fm.getAscent() / 2;
-            g2.drawString(msg, msgX, msgY);
+            g.drawString(msg, msgX, msgY);
             // --- Fix: force the timer to keep running so next round resumes ---
             if (!inGame) {
                 SwingUtilities.invokeLater(this::updateGame);
@@ -842,18 +1039,18 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             return;
         }
         // Draw score and lives
-        g2.setFont(gameFont.deriveFont(20f));
-        g2.setColor(WHITE);
-        g2.drawString("Score", 5, 25);
-        g2.setColor(GREEN);
-        g2.drawString(String.valueOf(score), 85, 25);
-        g2.setColor(WHITE);
-        g2.drawString("Lives", 640, 25);
+        g.setFont(gameFont.deriveFont(20f));
+        g.setColor(WHITE);
+        g.drawString("Score", 5, 25);
+        g.setColor(GREEN);
+        g.drawString(String.valueOf(score), 85, 25);
+        g.setColor(WHITE);
+        g.drawString("Lives", 640, 25);
         for (Life life : lives) {
-            life.draw(g2);
+            life.draw((Graphics2D) g);
         }
         // Draw blockers
-        for (Blocker b : blockers) b.draw(g2);
+        for (Blocker b : blockers) b.draw((Graphics2D) g);
         // Draw player (with blinking if invincible)
         boolean drawPlayer = true;
         if (playerInvincible) {
@@ -862,38 +1059,38 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             drawPlayer = (t % 2 == 0);
         }
         if (drawPlayer) {
-            player.draw(g2);
+            player.draw((Graphics2D) g);
         }
         // Draw enemies
-        for (Enemy e : enemies) e.draw(g2);
+        for (Enemy e : enemies) e.draw((Graphics2D) g);
         // Draw bullets
-        for (Bullet b : bullets) b.draw(g2);
-        for (Bullet b : enemyBullets) b.draw(g2);
+        for (Bullet b : bullets) b.draw((Graphics2D) g);
+        for (Bullet b : enemyBullets) b.draw((Graphics2D) g);
         // Draw mystery
-        for (Mystery m : mysteries) m.draw(g2);
+        for (Mystery m : mysteries) m.draw((Graphics2D) g);
         // Draw mystery score popups
         for (Iterator<MysteryScorePopup> it = mysteryPopups.iterator(); it.hasNext(); ) {
             MysteryScorePopup popup = it.next();
-            popup.draw(g2);
+            popup.draw((Graphics2D) g);
             if (popup.isExpired()) it.remove();
         }
         // Draw explosions
-        for (Explosion ex : explosions) ex.draw(g2);
+        for (Explosion ex : explosions) ex.draw((Graphics2D) g);
         // --- PAUSE SCREEN ---
         if (paused) {
             // Dim the game screen
-            g2.setColor(new Color(0, 0, 0, 180));
-            g2.fillRect(0, 0, WIDTH, HEIGHT);
+            g.setColor(new Color(0, 0, 0, 180));
+            g.fillRect(0, 0, WIDTH, HEIGHT);
             // Draw "PAUSED" in big red font
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 80f));
-            g2.setColor(RED);
+            g.setFont(gameFont.deriveFont(Font.BOLD, 80f));
+            g.setColor(RED);
             String pausedText = "PAUSED";
-            FontMetrics fm = g2.getFontMetrics();
+            FontMetrics fm = g.getFontMetrics();
             int px = (WIDTH - fm.stringWidth(pausedText)) / 2;
             int py = 200;
-            g2.drawString(pausedText, px, py);
+            g.drawString(pausedText, px, py);
             // Draw pause menu options
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 40f));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 40f));
             int menuStartY = py + 60;
             int menuSpacing = 55;
             for (int i = 0; i < pauseMenuOptions.length; i++) {
@@ -901,97 +1098,116 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
                 int x = WIDTH / 2;
                 int y = menuStartY + i * menuSpacing;
                 if (i == pauseMenuIndex) {
-                    g2.setColor(Color.WHITE);
-                    drawCenteredString(g2, opt, x, y);
+                    g.setColor(Color.WHITE);
+                    drawCenteredString((Graphics2D) g, opt, x, y);
                 } else {
-                    g2.setColor(RED);
-                    drawCenteredString(g2, opt, x, y);
+                    g.setColor(RED);
+                    drawCenteredString((Graphics2D) g, opt, x, y);
                 }
             }
             return;
         }
         // --- LEADERBOARD SCREEN ---
         if (leaderboardScreen) {
-            // Draw moving/tiled background using titlescreenbackground.png
+            // Draw moving/tiled background (like title screen)
             if (titleScreenBgImg != null) {
                 int imgW = titleScreenBgImg.getWidth();
                 int imgH = titleScreenBgImg.getHeight();
-                for (int x = -titleBgOffset; x < drawW; x += imgW) {
-                    for (int y = 0; y < drawH; y += imgH) {
-                        g2.drawImage(titleScreenBgImg, x, y, null);
+                for (int x = -titleBgOffset; x < WIDTH; x += imgW) {
+                    for (int y = 0; y < HEIGHT; y += imgH) {
+                        g.drawImage(titleScreenBgImg, x, y, null);
                     }
                 }
+                // Animate background offset
+                titleBgOffset = (titleBgOffset + titleBgSpeed) % imgW;
             } else {
-                g2.setColor(Color.BLACK);
-                g2.fillRect(0, 0, drawW, drawH);
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, WIDTH, HEIGHT);
             }
-            // Animate background offset
-            titleBgOffset = (titleBgOffset + titleBgSpeed) % (titleScreenBgImg != null ? titleScreenBgImg.getWidth() : WIDTH);
-            // Dim overlay
-            g2.setColor(new Color(0, 0, 0, 180));
-            g2.fillRect(0, 0, drawW, drawH);
-            // Draw LEADERBOARD title
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 48f));
-            g2.setColor(new Color(255, 221, 51)); // Yellow
-            String lbTitle = "LEADERBOARD";
-            int lbTitleW = g2.getFontMetrics().stringWidth(lbTitle);
-            g2.drawString(lbTitle, (drawW - lbTitleW) / 2, 100);
+            // Draw leaderboard title
+            g.setFont(gameFont.deriveFont(48f));
+            g.setColor(YELLOW);
+            g.drawString("LEADERBOARD", WIDTH / 2 - 200, 100);
             // Draw < BACK
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 24f));
-            g2.setColor(new Color(80, 255, 239)); // Cyan
-            g2.drawString("< BACK", 40, 80);
-            // Draw header row
+            g.setFont(gameFont.deriveFont(28f));
+            g.setColor(BLUE);
+            g.drawString("< BACK", 40, 80);
+            // Draw leaderboard table
+            int tableX = 80;
             int tableY = 150;
-            int rowH = 48;
-            int colRankX = 80, colNameX = 220, colScoreX = 600;
-            int tableW = drawW - 2 * colRankX;
-            g2.setColor(new Color(180, 140, 200)); // Purple header
-            g2.fillRect(colRankX, tableY, tableW, rowH);
-            g2.setFont(gameFont.deriveFont(Font.BOLD, 24f));
-            g2.setColor(Color.BLACK);
-            g2.drawString("RANK", colRankX + 20, tableY + 32);
-            g2.drawString("NAME", colNameX, tableY + 32);
-            g2.drawString("SCORE", colScoreX, tableY + 32);
-            // Draw leaderboard rows (scrollable)
-            int totalRows = leaderboardNames.size();
-            int maxScroll = Math.max(0, totalRows - LEADERBOARD_ROWS);
-            leaderboardScroll = Math.max(0, Math.min(leaderboardScroll, maxScroll));
-            for (int i = 0; i < LEADERBOARD_ROWS; i++) {
+            int tableW = 640;
+            int rowH = 32; // Fixed row height for clarity
+            // Set column widths for clean separation and centered NAME
+            int colRankW = 110; // RANK column width
+            int colNameW = 300; // NAME column width (centered)
+            int colScoreW = tableW - colRankW - colNameW; // SCORE column width
+            // Header
+            g.setColor(new Color(180, 120, 200));
+            g.fillRect(tableX, tableY, tableW, rowH);
+            g.setColor(Color.BLACK);
+            g.setFont(gameFont.deriveFont(28f));
+            // Calculate x positions for each column
+            int rankColX = tableX + 12; // 12px left padding
+            int nameColX = tableX + colRankW + 12; // 12px left padding after RANK
+            int scoreColX = tableX + colRankW + colNameW + 12; // 12px left padding after NAME
+            g.drawString("RANK", rankColX, tableY + 24);
+            g.drawString("NAME", nameColX, tableY + 24);
+            g.drawString("SCORE", scoreColX, tableY + 24);
+            // Draw vertical lines to separate columns
+            g.setColor(new Color(200, 200, 200));
+            int lineY1 = tableY;
+            int lineY2 = tableY + rowH * (Math.min(LEADERBOARD_ROWS, (HEIGHT - tableY - 40 - rowH) / rowH) + 1);
+            g.drawLine(tableX + colRankW, lineY1, tableX + colRankW, lineY2);
+            g.drawLine(tableX + colRankW + colNameW, lineY1, tableX + colRankW + colNameW, lineY2);
+            // Entries
+            java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+            int totalRows = topPlayers.size();
+            int maxTableHeight = HEIGHT - tableY - 40;
+            int visibleRows = Math.min(LEADERBOARD_ROWS, (maxTableHeight - rowH) / rowH);
+            int maxScroll = Math.max(0, totalRows - visibleRows);
+            if (leaderboardScroll > maxScroll) leaderboardScroll = maxScroll;
+            if (leaderboardScroll < 0) leaderboardScroll = 0;
+            int startIdx = leaderboardScroll;
+            for (int i = 0; i < visibleRows; i++) {
+                int entryIdx = startIdx + i;
                 int y = tableY + rowH * (i + 1);
-                int idx = i + leaderboardScroll;
-                g2.setColor(i % 2 == 0 ? new Color(60, 60, 60) : new Color(40, 40, 40));
-                g2.fillRect(colRankX, y, tableW, rowH);
-                g2.setFont(gameFont.deriveFont(Font.BOLD, 22f));
-                g2.setColor(Color.WHITE);
-                if (idx < totalRows) {
-                    g2.drawString(String.valueOf(idx + 1), colRankX + 32, y + 30);
-                    g2.drawString(leaderboardNames.get(idx), colNameX, y + 30);
-                    g2.drawString(String.valueOf(leaderboardScores.get(idx)), colScoreX, y + 30);
+                if (i % 2 == 0) g.setColor(new Color(40, 40, 40));
+                else g.setColor(new Color(60, 60, 60));
+                g.fillRect(tableX, y, tableW, rowH);
+                g.setFont(gameFont.deriveFont(26f));
+                g.setColor(Color.WHITE);
+                if (entryIdx < totalRows) {
+                    SIPlayerScore score = topPlayers.get(entryIdx);
+                    // Left-align RANK in its column
+                    g.drawString(String.valueOf(entryIdx + 1), rankColX, y + 24);
+                    // Left-align NAME in its column (centered in table)
+                    g.drawString(score.getName(), nameColX, y + 24);
+                    // Left-align SCORE in its column
+                    g.drawString(String.valueOf(score.getScore()), scoreColX, y + 24);
+                } else {
+                    g.drawString("-", rankColX, y + 24);
                 }
             }
-            // Draw scroll bar (static, for style)
-            int barX = colRankX + tableW - 16;
-            int barY = tableY + rowH;
-            int barH = rowH * LEADERBOARD_ROWS;
-            g2.setColor(new Color(80, 80, 80));
-            g2.fillRect(barX, barY, 16, barH);
-            // Draw thumb proportional to scroll
-            if (totalRows > LEADERBOARD_ROWS) {
-                int thumbH = Math.max(32, barH * LEADERBOARD_ROWS / totalRows);
+            // Draw scroll bar if needed
+            if (maxScroll > 0) {
+                int barX = tableX + tableW + 8;
+                int barY = tableY + rowH;
+                int barH = rowH * visibleRows;
+                int barW = 12;
+                g.setColor(new Color(180, 180, 180));
+                g.fillRect(barX, barY, barW, barH);
+                int thumbH = Math.max(24, barH * visibleRows / (totalRows + 1));
                 int thumbY = barY + (barH - thumbH) * leaderboardScroll / maxScroll;
-                g2.setColor(new Color(180, 180, 180));
-                g2.fillRect(barX, thumbY, 16, thumbH);
-            } else {
-                g2.setColor(new Color(180, 180, 180));
-                g2.fillRect(barX, barY, 16, barH);
-            }
-            // If empty, show message
-            if (totalRows == 0) {
-                g2.setFont(gameFont.deriveFont(Font.BOLD, 28f));
-                g2.setColor(Color.LIGHT_GRAY);
-                String msg = "No scores yet!";
-                int msgW = g2.getFontMetrics().stringWidth(msg);
-                g2.drawString(msg, (drawW - msgW) / 2, tableY + rowH * 6);
+                g.setColor(new Color(120, 120, 120));
+                g.fillRect(barX, thumbY, barW, thumbH);
+                g.setColor(Color.WHITE);
+                int arrowX = barX + barW / 2;
+                int[] upX = {arrowX - 6, arrowX, arrowX + 6};
+                int[] upY = {barY - 18, barY - 6, barY - 18};
+                g.fillPolygon(upX, upY, 3);
+                int[] downX = {arrowX - 6, arrowX, arrowX + 6};
+                int[] downY = {barY + barH + 18, barY + barH + 6, barY + barH + 18};
+                g.fillPolygon(downX, downY, 3);
             }
             return;
         }
@@ -1123,16 +1339,17 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             moveTick++;
             int speed = getCurrentSpeed();
             if (moveTick >= speed) {
-                // Find leftmost and rightmost enemy
+                // Find leftmost and rightmost enemy (include width for rightmost)
                 int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
                 for (Enemy e : enemies) {
                     if (e.x < minX) minX = e.x;
-                    if (e.x > maxX) maxX = e.x + 40;
+                    if (e.x + 40 > maxX) maxX = e.x + 40; // 40 = enemy width
                 }
                 boolean hitEdge = false;
-                if (direction == 1 && maxX + step >= rightBound) hitEdge = true;
-                if (direction == -1 && minX - step <= leftBound) hitEdge = true;
+                if (direction == 1 && maxX + step > rightBound) hitEdge = true;
+                if (direction == -1 && minX - step < leftBound) hitEdge = true;
                 if (hitEdge) {
+                    // Only move down and reverse if NOT already at the edge
                     for (Enemy e : enemies) {
                         e.y += enemyMoveDown;
                     }
@@ -1206,7 +1423,7 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             if (mx >= barX && mx <= barX + 16 && my >= barY && my <= barY + barH) {
                 // Scroll up or down depending on click position
                 int relY = my - barY;
-                int totalRows = leaderboardNames.size();
+                int totalRows = leaderboardManager.getTotalScores();
                 int maxScroll = Math.max(0, totalRows - LEADERBOARD_ROWS);
                 if (relY < barH / 2) {
                     leaderboardScroll = Math.max(0, leaderboardScroll - 1);
@@ -1251,5 +1468,22 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });
+    }
+
+    private void handleLeaderboardKey(int keyCode) {
+        java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+        int totalRows = topPlayers.size();
+        int dynamicRows = LEADERBOARD_ROWS;
+        int maxScroll = Math.max(0, totalRows - dynamicRows);
+        if (keyCode == KeyEvent.VK_UP) {
+            leaderboardScroll = Math.max(0, leaderboardScroll - 1);
+            repaint();
+        } else if (keyCode == KeyEvent.VK_DOWN) {
+            leaderboardScroll = Math.min(maxScroll, leaderboardScroll + 1);
+            repaint();
+        } else if (keyCode == KeyEvent.VK_ESCAPE || keyCode == KeyEvent.VK_LEFT) {
+            leaderboardScreen = false;
+            repaint();
+        }
     }
 }

@@ -3,15 +3,21 @@ package pacman.main;
 import javax.swing.*;
 
 import core.AbstractGamePanel;
+import core.LeaderboardPlayer;
+import core.LeaderboardSorter;
 import core.MainWindow;
 import core.Sound;
-import pacman.leaderboard.PlayerScore;
-import pacman.leaderboard.LeaderboardManager;
+//import pacman.leaderboard.PlayerScore;
+//import pacman.leaderboard.LeaderboardManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
@@ -110,6 +116,7 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
     }
     
 	public static final String DATA_FILE = "leaderboard.dat";
+	public LeaderboardPlayer currentPlayer;
 	//public Sound soundSystem;
     // Game board dimensions
     private int columnCount = 19;
@@ -218,7 +225,8 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
     private Rectangle hoveredButton = null;
 
     // Leaderboard Screen
-    private LeaderboardManager leaderboardManager = new LeaderboardManager();
+    //private LeaderboardManager leaderboardManager = new LeaderboardManager();
+    //private LeaderboardSorter
     public final int leaderboardState = 3;
     private String enteredName = "";
     private boolean nameEntered = false;
@@ -279,6 +287,7 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
         setBackground(Color.BLACK);
         addKeyListener(this);
         setFocusable(true);
+        ls=loadData();
         gameState = instructionState; // Start with instructions
         instructionsShown = false;
         
@@ -392,11 +401,12 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
             }
             else if (gameOver && gameState != leaderboardState) {
                 if (!nameEntered && enteredName.length() > 0) {
-                    leaderboardManager.addPlayer(new PlayerScore(enteredName, score));
+                    //ls.addPlayer(new PlayerScore(enteredName, score));
                     nameEntered = true;
                 } else if (!nameEntered) {
                     // Save as GUEST if no name was entered
-                    leaderboardManager.addPlayer(new PlayerScore("GUEST", score));
+                    //leaderboardManager.addPlayer(new PlayerScore("GUEST", score));
+                	//updateLeaderboard();
                     nameEntered = true;
                 }
 
@@ -425,7 +435,7 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
                 int scrollbarY = tileSize * 5;
                 int scrollbarHeight = visibleEntries * entryHeight;
 
-                List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+                List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
                 int totalHeight = topPlayers.size() * entryHeight;
                 int thumbHeight = Math.max((int)((float)scrollbarHeight / totalHeight * scrollbarHeight), 30);
                 int maxThumbY = scrollbarHeight - thumbHeight;
@@ -459,7 +469,7 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
                 int scrollbarTrackHeight = visibleEntries * entryHeight;
                 
                 // Calculate thumb position and size
-                List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+                List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
                 int totalHeight = topPlayers.size() * entryHeight;
                 int thumbHeight = calculateThumbHeight(totalHeight, scrollbarTrackHeight);
                 int thumbY = calculateThumbY(scrollOffset, totalHeight, scrollbarTrackHeight, thumbHeight, scrollbarTrackY);
@@ -546,7 +556,7 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (draggingScrollbar && gameState == leaderboardState) {
-                    List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+                    List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
                     int totalHeight = topPlayers.size() * entryHeight;
                     int scrollbarTrackHeight = visibleEntries * entryHeight;
                     int thumbHeight = calculateThumbHeight(totalHeight, scrollbarTrackHeight);
@@ -1725,7 +1735,9 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
                     //soundManager.playDeath();
                     playSFX(24);
                     if (lives <= 0) {
+                    	updateLeaderboard();
                         gameOver = true;
+                        
                     } else {
                         // Start respawn delay instead of immediately resetting
                         isRespawning = true;
@@ -2047,7 +2059,7 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
         g.setClip(0, tableStartY + rowHeight, boardWidth, visibleEntries * entryHeight);
 
         // Draw table content
-        List<PlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+        List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
         g.setFont(customFont.deriveFont(Font.PLAIN, SMALL_FONT_SIZE));
         int totalEntries = topPlayers.size();
         int tableY = tableStartY + rowHeight;
@@ -2058,7 +2070,7 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
 
         // Draw table rows
         for (int i = startIndex; i < Math.min(startIndex + visibleEntries + 1, topPlayers.size()); i++) {
-            PlayerScore p = topPlayers.get(i);
+            LeaderboardPlayer p = topPlayers.get(i);
             int y = tableY + (i - startIndex) * entryHeight + yOffset;
 
             // Alternate row colors
@@ -2532,8 +2544,10 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
             } else if (key == KeyEvent.VK_ENTER) {
                 // Handle Enter key - save as GUEST if empty, otherwise save entered name
                 String nameToSave = enteredName.trim().isEmpty() ? "GUEST" : enteredName.trim();
-                leaderboardManager.addPlayer(new PlayerScore(nameToSave, score));
+                //leaderboardManager.addPlayer(new PlayerScore(nameToSave, score));
+                currentPlayer.setName(nameToSave);
                 nameEntered = true;
+                saveData();
                 repaint();
             }
         }
@@ -2557,11 +2571,44 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
     public void keyReleased(KeyEvent e) {
         // Not used but required by interface
     }
-    
+    public void updateLeaderboard() {
+		currentPlayer = new LeaderboardPlayer(score);
+		ls.addPlayer(currentPlayer);
+		ls.sort();
+	}
+
+	
+	//FILE HANDLING
+	public LeaderboardSorter loadData() {
+		LeaderboardSorter ls = new LeaderboardSorter();
+		File file = new File(DATA_FILE);
+		if(file.exists()) {
+			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
+				ls = (LeaderboardSorter) ois.readObject();
+	            ois.close();
+	        } catch (IOException | ClassNotFoundException e) {
+	            System.out.println("No previous data found. Starting fresh.");
+	            e.printStackTrace();
+	        }
+		}
+		return ls;
+    }
+	public void saveData() {
+		//ls.out();
+		 try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+	            oos.writeObject(ls);
+	            oos.flush();
+				oos.close();
+	        } catch (IOException e) {
+	            System.out.println("Error saving data.");
+	            e.printStackTrace();
+	        }
+		 System.out.println("DATA SAVED!");
+	}
     private int getPlayerRank(int score) {
-        List<PlayerScore> top = leaderboardManager.getTopPlayers();
+        List<LeaderboardPlayer> top = ls.getTopPlayers();
         int rank = 1;
-        for (PlayerScore p : top) {
+        for (LeaderboardPlayer p : top) {
             if (score < p.getScore()) {
                 rank++;
             }

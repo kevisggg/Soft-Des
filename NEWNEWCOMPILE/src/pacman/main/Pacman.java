@@ -240,6 +240,8 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
     private static final int SCROLLBAR_MARGIN = 8;
     private static final int MIN_THUMB_HEIGHT = 30;
 
+    private long lastChompStartTime = 0;  // Add this as a class field
+    private static final long CHOMP_SOUND_DURATION = 600; // Reduce duration to 150ms
     private Rectangle volumeUpBounds;
     private Rectangle volumeDownBounds;
 
@@ -1651,12 +1653,17 @@ public class Pacman extends AbstractGamePanel implements ActionListener, KeyList
     
     private void checkFoodCollisions() {
         Block foodToRemove = null;
+        long currentTime = System.currentTimeMillis();
+        
         for (Block food : foods) {
             if (collision(pacman, food)) {
                 foodToRemove = food;
                 score += 10;
-                //soundManager.playChomp(); // Add this line
-                playSFX(23);
+                // Only play sound if enough time has passed since last chomp
+                if (currentTime - lastChompStartTime >= CHOMP_SOUND_DURATION) {
+                    playSFX(23);
+                    lastChompStartTime = currentTime;
+                }
                 break;
             }
         }

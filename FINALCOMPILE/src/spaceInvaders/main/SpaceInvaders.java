@@ -4,6 +4,8 @@ package spaceInvaders.main;
 import javax.swing.*;
 
 import core.AbstractGamePanel;
+import core.LeaderboardPlayer;
+import core.LeaderboardSorter;
 import core.MainWindow;
 
 import java.awt.*;
@@ -14,9 +16,6 @@ import java.io.*;
 import java.util.*;
 import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
-import spaceInvaders.*;
-import spaceInvaders.leaderboard.SILeaderboardManager;
-import spaceInvaders.leaderboard.SIPlayerScore;
 
 public class SpaceInvaders extends AbstractGamePanel implements ActionListener, KeyListener, MouseListener {
     // Window size
@@ -37,14 +36,18 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                 }
                 return;
             } else if (code == KeyEvent.VK_ENTER) {
-                if (!playerName.trim().isEmpty() && pendingNameEntry && pendingScore != null) {
+                if (!playerName.trim().isEmpty() && pendingNameEntry && currentPlayer != null) {
                     nameEntryComplete = true;
                     nameEntryActive = false;
+                    System.out.println(playerName);
                     // Update the pending score's name and re-sort leaderboard
-                    pendingScore.setName(playerName);
-                    leaderboardManager.addPlayer(pendingScore); // This will update the name and re-sort
+                    currentPlayer.setName(playerName);
+                    //leaderboardManager.addPlayer(currentPlayer); // This will update the name and re-sort
+                    ls.addPlayer(currentPlayer);
                     pendingNameEntry = false;
-                    pendingScore = null;
+                    saveData();
+                    //currentPlayer = null;
+                    System.out.println("NAME: " + currentPlayer.getName());
                     repaint();
                 }
                 return;
@@ -74,7 +77,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                         nameEntryActive = false;
                         nameEntryComplete = true;
                         pendingNameEntry = false;
-                        pendingScore = null;
+                        currentPlayer = null;
                         playerName = "";
                         repaint();
                         break;
@@ -148,7 +151,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                 return;
             }
             // Add scrolling if needed (now supports full leaderboard)
-            java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+            java.util.List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
             int totalRows = topPlayers.size();
             int dynamicRows = 20;
             int maxScroll = Math.max(0, totalRows - dynamicRows);
@@ -254,6 +257,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
         }
     }
 
+    public static final String DATA_FILE = "spaceinvaders_leaderboard.dat";
     // Colors
     public static final Color WHITE = new Color(255, 255, 255);
     public static final Color GREEN = new Color(78, 255, 87);
@@ -333,7 +337,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
     private final String[] pauseMenuOptions = {"RESUME", "RESTART", "EXIT"};
 
     // --- Leaderboard State ---
-    private SILeaderboardManager leaderboardManager = new SILeaderboardManager();
+    //private SILeaderboardManager leaderboardManager = new SILeaderboardManager();
     private boolean leaderboardScreen = false;
     private int leaderboardScroll = 0; // For scrolling
     private final int LEADERBOARD_ROWS = 20; // Show up to 20 rows at a time
@@ -352,7 +356,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
 
     // --- Pending Name Entry for Game Over ---
     private boolean pendingNameEntry = false;
-    private SIPlayerScore pendingScore = null;
+    //private LeaderboardPlayer currentPlayer = null;
 	//private MainWindow mainWindow;
 
     public SpaceInvaders(MainWindow mainWindow) {
@@ -362,6 +366,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
         addKeyListener(this);
         loadResources();
         playMusic(11);
+        ls=loadData();
         // Load title screen images
         try {
             titleScreenBgImg = ImageIO.read(getClass().getResourceAsStream(IMAGE_PATH + "titlescreenbackground.png"));
@@ -393,7 +398,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 if (leaderboardScreen) {
-                    java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+                    java.util.List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
                     int totalRows = topPlayers.size();
                     int tableY = 150;
                     int rowH = 32;
@@ -735,6 +740,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                     livesCount--;
                     if (!lives.isEmpty()) lives.remove(lives.size() - 1);
                     if (livesCount <= 0) {
+                    	updateLeaderboard();
                         gameOver = true;
                         inGame = false;
                         // Prepare for name entry and leaderboard update
@@ -744,7 +750,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                             nameEntryComplete = false;
                             playerName = "";
                             // Do NOT add score to leaderboard here; wait until name entry is complete
-                            pendingScore = new SIPlayerScore("", score);
+                            currentPlayer = new LeaderboardPlayer(score);
                             // Score will be added to leaderboard after name entry
                         }
                     }
@@ -960,8 +966,8 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
             g.drawString(scoreText, scoreX, scoreY);
             // Rank (if available)
             int rank = 0;
-            java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
-            for (SIPlayerScore p : topPlayers) {
+            java.util.List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
+            for (LeaderboardPlayer p : topPlayers) {
                 if (p.getName().equals(playerName) && p.getScore() == score) {
                     rank = p.getRank();
                     break;
@@ -1198,7 +1204,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
             g.drawLine(tableX + colRankW, lineY1, tableX + colRankW, lineY2);
             g.drawLine(tableX + colRankW + colNameW, lineY1, tableX + colRankW + colNameW, lineY2);
             // Entries
-            java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
+            java.util.List<LeaderboardPlayer> topPlayers = ls.getTopPlayers();
             int totalRows = topPlayers.size();
             int maxTableHeight = HEIGHT - tableY - 40;
             int visibleRows = Math.min(LEADERBOARD_ROWS, (maxTableHeight - rowH) / rowH);
@@ -1215,10 +1221,11 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                 g.setFont(gameFont.deriveFont(26f));
                 g.setColor(Color.WHITE);
                 if (entryIdx < totalRows) {
-                    SIPlayerScore score = topPlayers.get(entryIdx);
+                	LeaderboardPlayer score = topPlayers.get(entryIdx);
                     // Left-align RANK in its column
                     g.drawString(String.valueOf(entryIdx + 1), rankColX, y + 24);
                     // Left-align NAME in its column (centered in table)
+                    System.out.println(score.getName());
                     g.drawString(score.getName(), nameColX, y + 24);
                     // Left-align SCORE in its column
                     g.drawString(String.valueOf(score.getScore()), scoreColX, y + 24);
@@ -1462,8 +1469,8 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
             if (mx >= barX && mx <= barX + 16 && my >= barY && my <= barY + barH) {
                 // Scroll up or down depending on click position
                 int relY = my - barY;
-                int totalRows = leaderboardManager.getTotalScores();
-                int maxScroll = Math.max(0, totalRows - LEADERBOARD_ROWS);
+                //int totalRows = ls.getTotalScores();
+                int maxScroll = Math.max(0, LEADERBOARD_ROWS);
                 if (relY < barH / 2) {
                     leaderboardScroll = Math.max(0, leaderboardScroll - 1);
                 } else {
@@ -1494,7 +1501,37 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
     public void mouseReleased(MouseEvent e) {
         // Not used
     }
-
+    public void updateLeaderboard() {
+		currentPlayer = new LeaderboardPlayer(score);
+		ls.addPlayer(currentPlayer);
+		ls.sort();
+	}
+    public LeaderboardSorter loadData() {
+		LeaderboardSorter ls = new LeaderboardSorter();
+		File file = new File(DATA_FILE);
+		if(file.exists()) {
+			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
+				ls = (LeaderboardSorter) ois.readObject();
+	            ois.close();
+	        } catch (IOException | ClassNotFoundException e) {
+	            System.out.println("No previous data found. Starting fresh.");
+	            e.printStackTrace();
+	        }
+		}
+		return ls;
+    }
+	public void saveData() {
+		//ls.out();
+		 try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+	            oos.writeObject(ls);
+	            oos.flush();
+				oos.close();
+	        } catch (IOException e) {
+	            System.out.println("Error saving data.");
+	            e.printStackTrace();
+	        }
+		 System.out.println("DATA SAVED!");
+	}
     /*public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Space Invaders");
@@ -1509,7 +1546,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
         });
     }*/
 
-    private void handleLeaderboardKey(int keyCode) {
+    /*private void handleLeaderboardKey(int keyCode) {
         java.util.List<SIPlayerScore> topPlayers = leaderboardManager.getTopPlayers();
         int totalRows = topPlayers.size();
         int dynamicRows = LEADERBOARD_ROWS;
@@ -1524,5 +1561,5 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
             leaderboardScreen = false;
             repaint();
         }
-    }
+    }*/
 }

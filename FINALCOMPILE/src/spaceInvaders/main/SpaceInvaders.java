@@ -43,7 +43,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                     // Update the pending score's name and re-sort leaderboard
                     currentPlayer.setName(playerName);
                     //leaderboardManager.addPlayer(currentPlayer); // This will update the name and re-sort
-                    ls.addPlayer(currentPlayer);
+                    //ls.addPlayer(currentPlayer);
                     pendingNameEntry = false;
                     saveData();
                     //currentPlayer = null;
@@ -433,7 +433,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
             System.err.println("Background image not found");
         }
         // Load sounds
-        String[] soundNames = {"shoot", "shoot2", "invaderkilled", "mysterykilled", "shipexplosion", "mysteryentered"};
+        /*String[] soundNames = {"shoot", "shoot2", "invaderkilled", "mysterykilled", "shipexplosion", "mysteryentered"};
         for (String name : soundNames) {
         	System.out.println("sound loading: " + name);
             try {
@@ -443,13 +443,13 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
             }
         }
 
-        for (int i = 0; i < 4; i++) {
+        /*for (int i = 0; i < 4; i++) {
             try {
                 musicNotes[i] = loadClip(SOUND_PATH + i + ".wav");
             } catch (Exception e) {
                 System.err.println("Music note not found: " + i);
             }
-        }
+        }*/
      // Load font
         try {
             gameFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream(FONT_PATH)).deriveFont(24f);
@@ -750,7 +750,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                             nameEntryComplete = false;
                             playerName = "";
                             // Do NOT add score to leaderboard here; wait until name entry is complete
-                            currentPlayer = new LeaderboardPlayer(score);
+                            //currentPlayer = new LeaderboardPlayer(score);
                             // Score will be added to leaderboard after name entry
                         }
                     }
@@ -1225,7 +1225,7 @@ public class SpaceInvaders extends AbstractGamePanel implements ActionListener, 
                     // Left-align RANK in its column
                     g.drawString(String.valueOf(entryIdx + 1), rankColX, y + 24);
                     // Left-align NAME in its column (centered in table)
-                    System.out.println(score.getName());
+                    System.out.println("SCORE GET NAME: " + score.getName());
                     g.drawString(score.getName(), nameColX, y + 24);
                     // Left-align SCORE in its column
                     g.drawString(String.valueOf(score.getScore()), scoreColX, y + 24);
